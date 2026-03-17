@@ -1,6 +1,11 @@
 <?php
 declare( strict_types=1 );
 
+// Define constants required for Plugin class in test context.
+if ( ! defined( 'WP_AI_MIND_BASENAME' ) ) {
+    define( 'WP_AI_MIND_BASENAME', 'wp-ai-mind/wp-ai-mind.php' );
+}
+
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
 // Brain Monkey setUp/tearDown are called per test via trait.
