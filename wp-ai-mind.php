@@ -30,6 +30,10 @@ define( 'WP_AI_MIND_HTTP_TIMEOUT', 60 ); // seconds — LLM calls can be slow
 require_once WP_AI_MIND_DIR . 'includes/Core/Autoloader.php';
 WP_AI_Mind\Core\Autoloader::register();
 
+// ProGate defines the global wp_ai_mind_is_pro() helper — must load eagerly
+// because the autoloader only fires on class references, not function calls.
+require_once WP_AI_MIND_DIR . 'includes/Core/ProGate.php';
+
 // Activation / deactivation hooks (must fire before init).
 register_activation_hook( WP_AI_MIND_FILE, [ 'WP_AI_Mind\Core\Plugin', 'activate' ] );
 register_deactivation_hook( WP_AI_MIND_FILE, [ 'WP_AI_Mind\Core\Plugin', 'deactivate' ] );

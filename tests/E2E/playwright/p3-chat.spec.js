@@ -3,10 +3,10 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('P3 — Chat admin page', () => {
     test.beforeEach(async ({ page }) => {
-        // Log in as admin (WP default: admin / password)
+        // Log in as nj_agent (administrator, credentials from .env)
         await page.goto('/wp-login.php');
-        await page.fill('#user_login', 'admin');
-        await page.fill('#user_pass', 'password');
+        await page.fill('#user_login', 'nj_agent');
+        await page.fill('#user_pass', 'C8IcqAWJu8F3dOw6E4ndWhIe');
         await page.click('#wp-submit');
         await page.waitForURL('**/wp-admin/**');
     });
@@ -40,7 +40,7 @@ test.describe('P3 — Chat admin page', () => {
         const response = await page.request.get(
             'http://localhost:8080/wp-json/wp-ai-mind/v1/providers'
         );
-        // 200 or 401 — either means the route is registered
-        expect([200, 401]).toContain(response.status());
+        // 200, 401, or 403 — any of these means the route is registered
+        expect([200, 401, 403]).toContain(response.status());
     });
 });
