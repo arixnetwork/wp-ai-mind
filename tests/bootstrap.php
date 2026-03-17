@@ -30,6 +30,7 @@ if ( ! class_exists( 'WP_REST_Request' ) ) {
         private array $params = [];
         public function get_param( string $key ) { return $this->params[ $key ] ?? null; }
         public function get_json_params(): array { return $this->params; }
+        public function set_body_params( array $params ): void { $this->params = array_merge( $this->params, $params ); }
     }
 }
 

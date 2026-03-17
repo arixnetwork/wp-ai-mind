@@ -7,6 +7,7 @@ class ChatModule {
     public static function register(): void {
         add_action( 'rest_api_init', function() {
             ( new ChatRestController() )->register_routes();
+            ( new SettingsRestController() )->register_routes();
         } );
     }
 }
