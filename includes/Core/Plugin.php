@@ -47,6 +47,12 @@ class Plugin {
             add_action( 'plugins_loaded', [ \WP_AI_Mind\Modules\Chat\ChatModule::class, 'register' ], 20 );
             \WP_AI_Mind\Modules\Editor\EditorModule::register();
         }
+        if ( $this->modules->is_enabled( 'generator' ) ) {
+            \WP_AI_Mind\Modules\Generator\GeneratorModule::register();
+        }
+        if ( $this->modules->is_enabled( 'frontend_widget' ) ) {
+            \WP_AI_Mind\Modules\Frontend\FrontendWidgetModule::register();
+        }
     }
 
     public function load_textdomain(): void {
