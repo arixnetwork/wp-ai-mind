@@ -153,14 +153,36 @@ class ChatRestController {
                     break;
                 }
 
-                $tool_call   = $response->tool_call;
-                $tool_result = $this->tool_executor->execute(
-                    $tool_call['name'],
-                    $tool_call['arguments'],
-                    \get_current_user_id()
-                );
+                // Collect ALL tool_use blocks from the raw response (Claude may request multiple in one turn).
+                $all_tool_uses = [];
+                foreach ( $response->raw['content'] ?? [] as $block ) {
+                    if ( ( $block['type'] ?? '' ) === 'tool_use' ) {
+                        $all_tool_uses[] = $block;
+                    }
+                }
 
-                $messages = $this->append_tool_exchange( $messages, $provider_slug, $response, $tool_result );
+                // Fall back to the single tool_call extracted by the provider if raw parsing found nothing.
+                if ( empty( $all_tool_uses ) ) {
+                    $tc              = $response->tool_call;
+                    $all_tool_uses[] = [
+                        'id'    => $tc['id'],
+                        'name'  => $tc['name'],
+                        'input' => $tc['arguments'],
+                    ];
+                }
+
+                // Execute every tool and collect results keyed by tool_use id.
+                $tool_results = [];
+                foreach ( $all_tool_uses as $tu ) {
+                    $arguments          = $tu['input'] ?? [];
+                    $tool_results[ $tu['id'] ] = $this->tool_executor->execute(
+                        $tu['name'],
+                        $arguments,
+                        \get_current_user_id()
+                    );
+                }
+
+                $messages = $this->append_tool_exchange( $messages, $provider_slug, $response, $tool_results );
             }
 
             if ( null === $final_response ) {
@@ -236,30 +258,67 @@ class ChatRestController {
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
+    /**
+     * Append a complete tool exchange (assistant tool call + user tool result) to the message history.
+     *
+     * @param array             $messages      Existing message history.
+     * @param string            $provider_slug Provider identifier.
+     * @param CompletionResponse $tool_response The provider response that triggered tool execution.
+     * @param array             $tool_results  Tool results keyed by tool_use/call id.
+     * @return array Updated message history.
+     */
     private function append_tool_exchange(
         array $messages,
         string $provider_slug,
         CompletionResponse $tool_response,
-        array $tool_result
+        array $tool_results
     ): array {
-        $tool_call   = $tool_response->tool_call;
-        $result_json = \wp_json_encode( $tool_result );
+        $tool_call = $tool_response->tool_call;
+
+        // Convenience: result for the primary (first) tool call.
+        $primary_result      = $tool_results[ $tool_call['id'] ] ?? reset( $tool_results ) ?: [];
+        $primary_result_json = \wp_json_encode( $primary_result );
 
         switch ( $provider_slug ) {
             case 'claude':
+                $raw_content = $tool_response->raw['content'] ?? [];
+                // PHP json_decode converts {} to [] for empty objects.
+                // Claude requires tool_use.input to be a JSON object (dictionary), not an array.
+                foreach ( $raw_content as &$block ) {
+                    if ( ( $block['type'] ?? '' ) === 'tool_use' && ( $block['input'] ?? null ) === [] ) {
+                        $block['input'] = new \stdClass();
+                    }
+                }
+                unset( $block );
                 $messages[] = [
                     'role'    => 'assistant',
-                    'content' => $tool_response->raw['content'] ?? [],
+                    'content' => $raw_content,
                 ];
+                // Build one tool_result entry for every tool_use block in the assistant turn.
+                $result_blocks = [];
+                foreach ( $raw_content as $block ) {
+                    if ( ( $block['type'] ?? '' ) !== 'tool_use' ) {
+                        continue;
+                    }
+                    $tu_id           = $block['id'];
+                    $tu_result       = $tool_results[ $tu_id ] ?? [];
+                    $result_blocks[] = [
+                        'type'        => 'tool_result',
+                        'tool_use_id' => $tu_id,
+                        'content'     => \wp_json_encode( $tu_result ),
+                    ];
+                }
+                // Fall back to the primary result if raw content had no tool_use blocks.
+                if ( empty( $result_blocks ) ) {
+                    $result_blocks[] = [
+                        'type'        => 'tool_result',
+                        'tool_use_id' => $tool_call['id'],
+                        'content'     => $primary_result_json,
+                    ];
+                }
                 $messages[] = [
                     'role'    => 'user',
-                    'content' => [
-                        [
-                            'type'        => 'tool_result',
-                            'tool_use_id' => $tool_call['id'],
-                            'content'     => $result_json,
-                        ],
-                    ],
+                    'content' => $result_blocks,
                 ];
                 break;
 
@@ -281,7 +340,7 @@ class ChatRestController {
                 $messages[] = [
                     'role'         => 'tool',
                     'tool_call_id' => $tool_call['id'],
-                    'content'      => $result_json,
+                    'content'      => $primary_result_json,
                 ];
                 break;
 
@@ -306,7 +365,7 @@ class ChatRestController {
                             'functionResponse' => [
                                 'id'       => $call_id,
                                 'name'     => $tool_call['name'],
-                                'response' => $tool_result,
+                                'response' => $primary_result,
                             ],
                         ],
                     ],
@@ -316,7 +375,7 @@ class ChatRestController {
             default:
                 $messages[] = [
                     'role'    => 'user',
-                    'content' => 'Tool result: ' . $result_json,
+                    'content' => 'Tool result: ' . $primary_result_json,
                 ];
         }
 
