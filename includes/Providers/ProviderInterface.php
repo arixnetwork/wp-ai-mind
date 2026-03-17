@@ -60,4 +60,11 @@ interface ProviderInterface {
 	 * @return bool
 	 */
 	public function is_available(): bool;
+
+	/**
+	 * Returns true if this provider supports function/tool calling.
+	 *
+	 * @return bool
+	 */
+	public function supports_tools(): bool;
 }

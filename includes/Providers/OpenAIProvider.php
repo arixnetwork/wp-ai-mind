@@ -40,6 +40,10 @@ class OpenAIProvider extends AbstractProvider {
 			'max_tokens'  => $request->max_tokens,
 			'temperature' => $request->temperature,
 		];
+		if ( ! empty( $request->tools ) ) {
+			$body['tools']       = $request->tools; // already in OpenAI wire format from ToolRegistry
+			$body['tool_choice'] = 'auto';
+		}
 		$raw = $this->post( '/chat/completions', $body );
 		return $this->parse_response( $raw, $model );
 	}
@@ -95,12 +99,36 @@ class OpenAIProvider extends AbstractProvider {
 	}
 
 	private function parse_response( array $data, string $model ): CompletionResponse {
-		$content    = $data['choices'][0]['message']['content'] ?? '';
 		$in_tokens  = (int) ( $data['usage']['prompt_tokens']     ?? 0 );
 		$out_tokens = (int) ( $data['usage']['completion_tokens'] ?? 0 );
 		$pricing    = self::PRICING[ $model ] ?? self::PRICING[ self::DEFAULT_MODEL ];
 		$cost       = ( $in_tokens / 1_000_000 * $pricing['in'] ) + ( $out_tokens / 1_000_000 * $pricing['out'] );
 
+		$message       = $data['choices'][0]['message'] ?? [];
+		$finish_reason = $data['choices'][0]['finish_reason'] ?? '';
+
+		// Detect tool call response.
+		if ( 'tool_calls' === $finish_reason ) {
+			$tool_call_data = $message['tool_calls'][0] ?? null;
+			if ( $tool_call_data ) {
+				$arguments = json_decode( $tool_call_data['function']['arguments'] ?? '{}', true ) ?? [];
+				return new CompletionResponse(
+					content: '',
+					model: $data['model'] ?? $model,
+					prompt_tokens: $in_tokens,
+					completion_tokens: $out_tokens,
+					cost_usd: $cost,
+					raw: $data,
+					tool_call: [
+						'id'        => $tool_call_data['id'],
+						'name'      => $tool_call_data['function']['name'],
+						'arguments' => $arguments,
+					],
+				);
+			}
+		}
+
+		$content = $message['content'] ?? '';
 		return new CompletionResponse( $content, $model, $in_tokens, $out_tokens, $cost, $data );
 	}
 }

@@ -24,6 +24,16 @@ abstract class AbstractProvider implements ProviderInterface {
 		return $response;
 	}
 
+	/**
+	 * Default implementation — most providers support tool calling.
+	 * Providers that do not (e.g. Ollama) override this to return false.
+	 *
+	 * @return bool
+	 */
+	public function supports_tools(): bool {
+		return true;
+	}
+
 	// ── Abstract — each provider implements these ─────────────────────────────
 
 	abstract protected function do_complete( CompletionRequest $request ): CompletionResponse;

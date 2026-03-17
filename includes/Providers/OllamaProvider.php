@@ -16,6 +16,15 @@ class OllamaProvider extends AbstractProvider {
 	public function get_models(): array  { return [ $this->default_model => $this->default_model ]; }
 	public function is_available(): bool { return '' !== $this->base_url; }
 
+	/**
+	 * Ollama does not support function/tool calling in the plugin's tool-use protocol.
+	 *
+	 * @return bool
+	 */
+	public function supports_tools(): bool {
+		return false;
+	}
+
 	protected function do_complete( CompletionRequest $request ): CompletionResponse {
 		$messages = $request->messages;
 		if ( '' !== $request->system ) {

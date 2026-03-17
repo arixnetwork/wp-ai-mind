@@ -14,6 +14,7 @@ final class CompletionRequest {
 	 * @param float  $temperature   Sampling temperature.
 	 * @param int    $max_tokens    Maximum tokens to generate.
 	 * @param array  $metadata      Arbitrary context (post_id, feature, etc.).
+	 * @param array  $tools         Tool definitions in provider wire format (empty = no tools).
 	 */
 	public function __construct(
 		public readonly array  $messages,
@@ -22,5 +23,6 @@ final class CompletionRequest {
 		public readonly float  $temperature = 0.7,
 		public readonly int    $max_tokens = 2048,
 		public readonly array  $metadata = [],
+		public readonly array  $tools = [],
 	) {}
 }

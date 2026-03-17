@@ -70,4 +70,67 @@ class GeminiProviderTest extends TestCase {
 		$this->expectException( ProviderException::class );
 		$provider->complete( new CompletionRequest( [ [ 'role' => 'user', 'content' => 'hi' ] ] ) );
 	}
+
+	public function test_function_call_response_detected(): void {
+		$this->mock_wpdb();
+		Functions\when( 'wp_remote_post' )->justReturn( [
+			'response' => [ 'code' => 200 ],
+			'body'     => json_encode( [
+				'candidates' => [
+					[
+						'content' => [
+							'parts' => [
+								[
+									'functionCall' => [
+										'name' => 'get_recent_posts',
+										'args' => [ 'count' => 5 ],
+									],
+								],
+							],
+						],
+					],
+				],
+				'modelVersion'  => 'gemini-2.5-pro',
+				'usageMetadata' => [ 'promptTokenCount' => 10, 'candidatesTokenCount' => 4 ],
+			] ),
+		] );
+		Functions\when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+		Functions\when( 'wp_remote_retrieve_body' )->alias( fn( $r ) => $r['body'] );
+		Functions\when( 'is_wp_error' )->justReturn( false );
+		Functions\when( 'wp_json_encode' )->alias( fn($v) => json_encode($v) );
+
+		$provider = new GeminiProvider( 'AIza-test' );
+		$request  = new CompletionRequest( [ [ 'role' => 'user', 'content' => 'list posts' ] ] );
+		$response = $provider->complete( $request );
+
+		$this->assertTrue( $response->is_tool_call() );
+		$this->assertSame( 'get_recent_posts', $response->tool_call['name'] );
+		$this->assertSame( [ 'count' => 5 ], $response->tool_call['arguments'] );
+		// The generated call_id must be preserved in raw for history reconstruction.
+		$this->assertArrayHasKey( 'call_id', $response->raw );
+		$this->assertSame( $response->tool_call['id'], $response->raw['call_id'] );
+		$this->assertSame( '', $response->content );
+	}
+
+	public function test_normal_response_not_tool_call(): void {
+		$this->mock_wpdb();
+		Functions\when( 'wp_remote_post' )->justReturn( [
+			'response' => [ 'code' => 200 ],
+			'body'     => json_encode( [
+				'candidates'    => [ [ 'content' => [ 'parts' => [ [ 'text' => 'Gemini says hi' ] ] ] ] ],
+				'usageMetadata' => [ 'promptTokenCount' => 5, 'candidatesTokenCount' => 3 ],
+			] ),
+		] );
+		Functions\when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+		Functions\when( 'wp_remote_retrieve_body' )->alias( fn( $r ) => $r['body'] );
+		Functions\when( 'is_wp_error' )->justReturn( false );
+		Functions\when( 'wp_json_encode' )->alias( fn($v) => json_encode($v) );
+
+		$provider = new GeminiProvider( 'AIza-test' );
+		$request  = new CompletionRequest( [ [ 'role' => 'user', 'content' => 'hi' ] ] );
+		$response = $provider->complete( $request );
+
+		$this->assertFalse( $response->is_tool_call() );
+		$this->assertNull( $response->tool_call );
+	}
 }

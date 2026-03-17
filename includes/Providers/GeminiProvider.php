@@ -34,6 +34,9 @@ class GeminiProvider extends AbstractProvider {
 		if ( '' !== $request->system ) {
 			$body['systemInstruction'] = [ 'parts' => [ [ 'text' => $request->system ] ] ];
 		}
+		if ( ! empty( $request->tools ) ) {
+			$body['tools'] = $request->tools; // already in Gemini wire format (functionDeclarations)
+		}
 		$raw = $this->post( "/models/{$model}:generateContent", $body );
 		return $this->parse_response( $raw, $model );
 	}
@@ -122,12 +125,36 @@ class GeminiProvider extends AbstractProvider {
 	}
 
 	private function parse_response( array $data, string $model ): CompletionResponse {
-		$content    = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
 		$meta       = $data['usageMetadata'] ?? [];
 		$in_tokens  = (int) ( $meta['promptTokenCount']     ?? 0 );
 		$out_tokens = (int) ( $meta['candidatesTokenCount'] ?? 0 );
 		$pricing    = self::PRICING[ $model ] ?? self::PRICING[ self::DEFAULT_MODEL ];
 		$cost       = ( $in_tokens / 1_000_000 * $pricing['in'] ) + ( $out_tokens / 1_000_000 * $pricing['out'] );
+
+		// Check for a functionCall in the response parts.
+		$parts = $data['candidates'][0]['content']['parts'] ?? [];
+		foreach ( $parts as $part ) {
+			if ( isset( $part['functionCall'] ) ) {
+				$fc      = $part['functionCall'];
+				// Gemini does not always return a stable call ID; generate one for history use.
+				$call_id = $fc['id'] ?? \uniqid( 'gemini_', true );
+				return new CompletionResponse(
+					content: '',
+					model: $data['modelVersion'] ?? $model,
+					prompt_tokens: $in_tokens,
+					completion_tokens: $out_tokens,
+					cost_usd: $cost,
+					raw: [ 'data' => $data, 'call_id' => $call_id ], // preserve generated call_id for history reconstruction
+					tool_call: [
+						'id'        => $call_id,
+						'name'      => $fc['name'],
+						'arguments' => $fc['args'] ?? [],
+					],
+				);
+			}
+		}
+
+		$content = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
 		return new CompletionResponse( $content, $model, $in_tokens, $out_tokens, $cost, $data );
 	}
 }

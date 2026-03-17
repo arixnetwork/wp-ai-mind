@@ -31,7 +31,7 @@ class ClaudeProvider extends AbstractProvider {
 	protected function do_complete( CompletionRequest $request ): CompletionResponse {
 		$body = $this->build_body( $request );
 		$raw  = $this->post( '/messages', $body );
-		return $this->parse_response( $raw );
+		return $this->parse_response( $raw, $request );
 	}
 
 	protected function do_stream( CompletionRequest $request, callable $on_chunk ): CompletionResponse {
@@ -64,6 +64,9 @@ class ClaudeProvider extends AbstractProvider {
 		if ( '' !== $request->system ) {
 			$body['system'] = $request->system;
 		}
+		if ( ! empty( $request->tools ) ) {
+			$body['tools'] = $request->tools; // already in Claude wire format from ToolRegistry
+		}
 		return $body;
 	}
 
@@ -93,14 +96,48 @@ class ClaudeProvider extends AbstractProvider {
 		return $data;
 	}
 
-	private function parse_response( array $data ): CompletionResponse {
-		$content    = $data['content'][0]['text'] ?? '';
-		$model      = $data['model'] ?? self::DEFAULT_MODEL;
+	private function parse_response( array $data, CompletionRequest $request ): CompletionResponse {
+		$model      = $data['model'] ?? ( $request->model ?: self::DEFAULT_MODEL );
 		$in_tokens  = (int) ( $data['usage']['input_tokens']  ?? 0 );
 		$out_tokens = (int) ( $data['usage']['output_tokens'] ?? 0 );
 		$pricing    = self::PRICING[ $model ] ?? self::PRICING[ self::DEFAULT_MODEL ];
 		$cost       = ( $in_tokens / 1_000_000 * $pricing['in'] ) + ( $out_tokens / 1_000_000 * $pricing['out'] );
 
-		return new CompletionResponse( $content, $model, $in_tokens, $out_tokens, $cost, $data );
+		// Check for a tool_use block in the response content.
+		$content_blocks = $data['content'] ?? [];
+		$tool_use_block = null;
+		foreach ( $content_blocks as $block ) {
+			if ( ( $block['type'] ?? '' ) === 'tool_use' ) {
+				$tool_use_block = $block;
+				break;
+			}
+		}
+
+		if ( null !== $tool_use_block ) {
+			return new CompletionResponse(
+				content: '',
+				model: $model,
+				prompt_tokens: $in_tokens,
+				completion_tokens: $out_tokens,
+				cost_usd: $cost,
+				raw: $data,
+				tool_call: [
+					'id'        => $tool_use_block['id'],
+					'name'      => $tool_use_block['name'],
+					'arguments' => $tool_use_block['input'] ?? [],
+				],
+			);
+		}
+
+		// Normal text response — extract text from the first text block.
+		$text_content = '';
+		foreach ( $content_blocks as $block ) {
+			if ( ( $block['type'] ?? '' ) === 'text' ) {
+				$text_content = $block['text'] ?? '';
+				break;
+			}
+		}
+
+		return new CompletionResponse( $text_content, $model, $in_tokens, $out_tokens, $cost, $data );
 	}
 }

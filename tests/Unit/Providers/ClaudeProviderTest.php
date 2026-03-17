@@ -76,4 +76,115 @@ class ClaudeProviderTest extends TestCase {
 		$this->expectException( ProviderException::class );
 		$provider->complete( $request );
 	}
+
+	public function test_tool_use_response_returns_tool_call(): void {
+		Functions\when( 'wp_remote_post' )->justReturn( [
+			'response' => [ 'code' => 200 ],
+			'body'     => json_encode( [
+				'content' => [
+					[
+						'type'  => 'tool_use',
+						'id'    => 'toolu_01',
+						'name'  => 'get_recent_posts',
+						'input' => [ 'count' => 5 ],
+					],
+				],
+				'model'   => 'claude-sonnet-4-6',
+				'usage'   => [ 'input_tokens' => 20, 'output_tokens' => 8 ],
+			] ),
+		] );
+		Functions\when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+		Functions\when( 'wp_remote_retrieve_body' )->alias( fn( $r ) => $r['body'] );
+		Functions\when( 'is_wp_error' )->justReturn( false );
+		Functions\when( 'wp_json_encode' )->alias( fn($v) => json_encode($v) );
+		Functions\when( 'get_current_user_id' )->justReturn( 1 );
+		Functions\when( 'sanitize_key' )->alias( fn($v) => $v );
+		Functions\when( 'sanitize_text_field' )->alias( fn($v) => $v );
+
+		global $wpdb;
+		$wpdb = new class extends \stdClass {
+			public $prefix = 'wpaim_';
+			public function insert() { return 1; }
+		};
+
+		$provider = new ClaudeProvider( 'sk-ant-test' );
+		$request  = new CompletionRequest( [ [ 'role' => 'user', 'content' => 'list posts' ] ] );
+		$response = $provider->complete( $request );
+
+		$this->assertTrue( $response->is_tool_call() );
+		$this->assertSame( 'get_recent_posts', $response->tool_call['name'] );
+		$this->assertSame( 'toolu_01', $response->tool_call['id'] );
+		$this->assertSame( [ 'count' => 5 ], $response->tool_call['arguments'] );
+		$this->assertSame( '', $response->content );
+	}
+
+	public function test_normal_response_not_tool_call(): void {
+		Functions\when( 'wp_remote_post' )->justReturn( [
+			'response' => [ 'code' => 200 ],
+			'body'     => json_encode( [
+				'content' => [ [ 'type' => 'text', 'text' => 'Hello world' ] ],
+				'model'   => 'claude-sonnet-4-6',
+				'usage'   => [ 'input_tokens' => 10, 'output_tokens' => 5 ],
+			] ),
+		] );
+		Functions\when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+		Functions\when( 'wp_remote_retrieve_body' )->alias( fn( $r ) => $r['body'] );
+		Functions\when( 'is_wp_error' )->justReturn( false );
+		Functions\when( 'wp_json_encode' )->alias( fn($v) => json_encode($v) );
+		Functions\when( 'get_current_user_id' )->justReturn( 1 );
+		Functions\when( 'sanitize_key' )->alias( fn($v) => $v );
+		Functions\when( 'sanitize_text_field' )->alias( fn($v) => $v );
+
+		global $wpdb;
+		$wpdb = new class extends \stdClass {
+			public $prefix = 'wpaim_';
+			public function insert() { return 1; }
+		};
+
+		$provider = new ClaudeProvider( 'sk-ant-test' );
+		$request  = new CompletionRequest( [ [ 'role' => 'user', 'content' => 'hi' ] ] );
+		$response = $provider->complete( $request );
+
+		$this->assertFalse( $response->is_tool_call() );
+		$this->assertNull( $response->tool_call );
+	}
+
+	public function test_tools_injected_in_request_body(): void {
+		$captured_body = null;
+		Functions\when( 'wp_remote_post' )->alias( function( $url, $args ) use ( &$captured_body ) {
+			$captured_body = json_decode( $args['body'], true );
+			return [
+				'response' => [ 'code' => 200 ],
+				'body'     => json_encode( [
+					'content' => [ [ 'type' => 'text', 'text' => 'done' ] ],
+					'model'   => 'claude-sonnet-4-6',
+					'usage'   => [ 'input_tokens' => 5, 'output_tokens' => 2 ],
+				] ),
+			];
+		} );
+		Functions\when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+		Functions\when( 'wp_remote_retrieve_body' )->alias( fn( $r ) => $r['body'] );
+		Functions\when( 'is_wp_error' )->justReturn( false );
+		Functions\when( 'wp_json_encode' )->alias( fn($v) => json_encode($v) );
+		Functions\when( 'get_current_user_id' )->justReturn( 1 );
+		Functions\when( 'sanitize_key' )->alias( fn($v) => $v );
+		Functions\when( 'sanitize_text_field' )->alias( fn($v) => $v );
+
+		global $wpdb;
+		$wpdb = new class extends \stdClass {
+			public $prefix = 'wpaim_';
+			public function insert() { return 1; }
+		};
+
+		$tools    = [ [ 'name' => 'get_recent_posts', 'description' => 'Fetches recent posts.' ] ];
+		$provider = new ClaudeProvider( 'sk-ant-test' );
+		$request  = new CompletionRequest(
+			messages: [ [ 'role' => 'user', 'content' => 'list posts' ] ],
+			tools: $tools,
+		);
+		$provider->complete( $request );
+
+		$this->assertArrayHasKey( 'tools', $captured_body );
+		$this->assertSame( $tools, $captured_body['tools'] );
+	}
 }
