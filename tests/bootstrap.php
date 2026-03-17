@@ -5,6 +5,9 @@ declare( strict_types=1 );
 if ( ! defined( 'WP_AI_MIND_BASENAME' ) ) {
     define( 'WP_AI_MIND_BASENAME', 'wp-ai-mind/wp-ai-mind.php' );
 }
+if ( ! defined( 'WP_AI_MIND_HTTP_TIMEOUT' ) ) {
+    define( 'WP_AI_MIND_HTTP_TIMEOUT', 60 );
+}
 
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
