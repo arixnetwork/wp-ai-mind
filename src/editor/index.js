@@ -1,2 +1,2 @@
-// WP AI Mind — Gutenberg editor sidebar entry point.
-// Full implementation in P4.
+// Entry point — registers the WP AI Mind Gutenberg sidebar plugin.
+import './components/EditorSidebar';
