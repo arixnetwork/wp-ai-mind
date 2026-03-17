@@ -19,7 +19,7 @@ class AdminMenu {
         add_submenu_page( 'wp-ai-mind', __( 'Generator', 'wp-ai-mind' ), __( 'Generator', 'wp-ai-mind' ),        'edit_posts',    'wp-ai-mind-generator', [ GeneratorPage::class, 'render' ] );
         add_submenu_page( 'wp-ai-mind', __( 'SEO', 'wp-ai-mind' ),       __( 'SEO', 'wp-ai-mind' ),              'edit_posts',    'wp-ai-mind-seo',       '__return_false' );
         add_submenu_page( 'wp-ai-mind', __( 'Images', 'wp-ai-mind' ),    __( 'Images', 'wp-ai-mind' ),           'edit_posts',    'wp-ai-mind-images',    '__return_false' );
-        add_submenu_page( 'wp-ai-mind', __( 'Usage', 'wp-ai-mind' ),     __( 'Usage &amp; Cost', 'wp-ai-mind' ), 'manage_options','wp-ai-mind-usage',     '__return_false' );
+        add_submenu_page( 'wp-ai-mind', __( 'Usage', 'wp-ai-mind' ),     __( 'Usage &amp; Cost', 'wp-ai-mind' ), 'manage_options','wp-ai-mind-usage',     [ UsagePage::class, 'render' ] );
         add_submenu_page( 'wp-ai-mind', __( 'Settings', 'wp-ai-mind' ),  __( 'Settings', 'wp-ai-mind' ),         'manage_options','wp-ai-mind-settings',  [ SettingsPage::class, 'render' ] );
     }
 

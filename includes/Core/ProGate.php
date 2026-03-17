@@ -13,8 +13,16 @@ namespace WP_AI_Mind\Core {
 		private const OPTION_KEY = 'wp_ai_mind_licence_status';
 
 		public static function is_pro(): bool {
-			// Stub: in P6 this will call wp_ai_mind_freemius()->can_use_premium_code().
-			return 'active' === get_option( self::OPTION_KEY, '' );
+			// When Freemius SDK is loaded, delegate to it.
+			if ( function_exists( 'wp_ai_mind_freemius' ) ) {
+				try {
+					return \wp_ai_mind_freemius()->can_use_premium_code__premium_only();
+				} catch ( \Throwable $e ) {
+					// Freemius not yet initialised — fall through to option check.
+				}
+			}
+			// Fallback: manual licence flag set during activation.
+			return 'active' === \get_option( self::OPTION_KEY, '' );
 		}
 
 		/** Called from Freemius webhook / activation in P6. */

@@ -11,6 +11,11 @@ if ( ! defined( 'WP_AI_MIND_HTTP_TIMEOUT' ) ) {
 
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
+// WordPress query-result format constants (not provided by Brain Monkey).
+if ( ! defined( 'OBJECT' ) )   { define( 'OBJECT',   'OBJECT' ); }
+if ( ! defined( 'ARRAY_A' ) )  { define( 'ARRAY_A',  'ARRAY_A' ); }
+if ( ! defined( 'ARRAY_N' ) )  { define( 'ARRAY_N',  'ARRAY_N' ); }
+
 // Brain Monkey setUp/tearDown are called per test via trait.
 // WP stubs — Brain Monkey provides them when you call Monkey\setUp().
 

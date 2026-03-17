@@ -53,6 +53,9 @@ class Plugin {
         if ( $this->modules->is_enabled( 'frontend_widget' ) ) {
             \WP_AI_Mind\Modules\Frontend\FrontendWidgetModule::register();
         }
+        if ( $this->modules->is_enabled( 'usage' ) ) {
+            \WP_AI_Mind\Modules\Usage\UsageModule::register();
+        }
     }
 
     public function load_textdomain(): void {
