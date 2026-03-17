@@ -42,6 +42,7 @@ class Plugin {
         add_action( 'init', [ $this, 'load_textdomain' ] );
         add_action( 'admin_menu', [ $this, 'register_admin_menu' ] );
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
+        add_action( 'wp_ai_mind_register_menu', [ \WP_AI_Mind\Admin\AdminMenu::class, 'register' ] );
     }
 
     public function load_textdomain(): void {
