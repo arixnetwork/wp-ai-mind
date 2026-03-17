@@ -1,0 +1,17 @@
+const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
+const path = require( 'path' );
+
+module.exports = {
+	...defaultConfig,
+	entry: {
+		'admin/index':     path.resolve( __dirname, 'src/admin/index.js' ),
+		'editor/index':    path.resolve( __dirname, 'src/editor/index.js' ),
+		'generator/index': path.resolve( __dirname, 'src/generator/index.js' ),
+		'usage/index':     path.resolve( __dirname, 'src/usage/index.js' ),
+		'frontend/widget': path.resolve( __dirname, 'src/frontend/widget.js' ),
+	},
+	output: {
+		...defaultConfig.output,
+		path: path.resolve( __dirname, 'assets' ),
+	},
+};

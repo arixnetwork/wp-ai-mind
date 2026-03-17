@@ -1,0 +1,43 @@
+/* Root tokens — define once in admin.css, use everywhere */
+:root {
+  /* Neutrals (zinc scale) */
+  --color-bg:          #09090b;   /* zinc-950 — page background */
+  --color-surface:     #18181b;   /* zinc-900 — card/panel background */
+  --color-surface-2:   #27272a;   /* zinc-800 — input/hover background */
+  --color-border:      #3f3f46;   /* zinc-700 — default border */
+  --color-border-subtle: #27272a; /* zinc-800 — subtle dividers */
+
+  /* Text */
+  --color-text-primary:   #fafafa;  /* zinc-50 */
+  --color-text-secondary: #a1a1aa;  /* zinc-400 */
+  --color-text-muted:     #52525b;  /* zinc-600 */
+
+  /* Single accent — blue, used sparingly */
+  --color-accent:      #2563eb;   /* blue-600 */
+  --color-accent-hover:#1d4ed8;   /* blue-700 */
+  --color-accent-subtle: rgba(37,99,235,0.12);
+  --color-accent-border: rgba(37,99,235,0.3);
+
+  /* Semantic */
+  --color-success:     #16a34a;   /* green-600 */
+  --color-success-subtle: rgba(22,163,74,0.1);
+  --color-warning:     #d97706;   /* amber-600 */
+  --color-error:       #dc2626;   /* red-600 */
+
+  /* Spacing */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+  --space-4: 16px; --space-5: 20px; --space-6: 24px;
+  --space-8: 32px; --space-10: 40px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius:    6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Typography */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --text-xs:   11px; --text-sm: 12px; --text-base: 13px;
+  --text-md:   14px; --text-lg: 16px; --text-xl:   20px;
+}
