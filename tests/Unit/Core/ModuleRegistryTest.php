@@ -24,6 +24,8 @@ class ModuleRegistryTest extends TestCase {
         Functions\when( 'get_option' )->justReturn( [] );
         $registry = new ModuleRegistry();
         $this->assertTrue( $registry->is_enabled( 'chat' ) );
+        $this->assertTrue( $registry->is_enabled( 'generator' ) );
+        $this->assertTrue( $registry->is_enabled( 'usage' ) );
     }
 
     public function test_module_can_be_disabled(): void {

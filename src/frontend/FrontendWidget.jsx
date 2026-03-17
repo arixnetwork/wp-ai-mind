@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from '@wordpress/element';
 import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import apiFetch from '@wordpress/api-fetch';
+import MarkdownContent from '../shared/MarkdownContent';
 
 const { currentPostId, siteTitle } = window.wpAiMindData || {};
 
@@ -70,7 +71,10 @@ export default function FrontendWidget() {
 					)}
 					{messages.map((m, i) => (
 						<div key={i} className={`wpaim-widget__bubble wpaim-widget__bubble--${m.role === 'user' ? 'user' : 'ai'}`}>
-							{m.content}
+							{ m.role === 'assistant'
+							? <MarkdownContent content={m.content} />
+							: m.content
+						}
 						</div>
 					))}
 					{isLoading && (

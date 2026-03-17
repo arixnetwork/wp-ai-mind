@@ -41,7 +41,7 @@ class SettingsRestControllerTest extends TestCase {
                 'wp_ai_mind_default_provider' => 'claude',
                 'wp_ai_mind_image_provider'   => 'gemini',
                 'wp_ai_mind_site_voice'        => 'friendly',
-                'wp_ai_mind_enabled_modules'  => [ 'chat' ],
+                'wp_ai_mind_modules'          => [ 'chat' => true, 'text_rewrite' => false, 'summaries' => false, 'seo' => false, 'images' => false, 'generator' => false, 'frontend_widget' => false, 'usage' => false ],
                 'wp_ai_mind_ollama_url'        => 'http://localhost:11434',
             ];
             return $map[ $key ] ?? $default;
@@ -116,6 +116,8 @@ class SettingsRestControllerTest extends TestCase {
         } );
         Functions\when( 'sanitize_text_field' )->alias( fn( $v ) => $v );
         Functions\when( 'esc_url_raw' )->alias( fn( $v ) => $v );
+        // ModuleRegistry::__construct() calls get_option to load saved state.
+        Functions\when( 'get_option' )->justReturn( [] );
 
         $api_key_calls = [];
         $controller = new class( $api_key_calls ) extends SettingsRestController {
@@ -159,7 +161,16 @@ class SettingsRestControllerTest extends TestCase {
         $this->assertSame( 'claude',                     $stored['wp_ai_mind_default_provider'] );
         $this->assertSame( 'gemini',                     $stored['wp_ai_mind_image_provider'] );
         $this->assertSame( 'professional',               $stored['wp_ai_mind_site_voice'] );
-        $this->assertSame( [ 'chat', 'summaries' ],      $stored['wp_ai_mind_enabled_modules'] );
+        $this->assertArrayHasKey( 'wp_ai_mind_modules', $stored );
+        $modules_map = $stored['wp_ai_mind_modules'];
+        $this->assertTrue( $modules_map['chat'] );
+        $this->assertTrue( $modules_map['summaries'] );
+        $this->assertFalse( $modules_map['text_rewrite'] );
+        $this->assertFalse( $modules_map['seo'] );
+        $this->assertFalse( $modules_map['images'] );
+        $this->assertFalse( $modules_map['generator'] );
+        $this->assertFalse( $modules_map['frontend_widget'] );
+        $this->assertFalse( $modules_map['usage'] );
         $this->assertSame( 'http://localhost:11434',      $stored['wp_ai_mind_ollama_url'] );
 
         // set_api_key called for non-masked keys only.

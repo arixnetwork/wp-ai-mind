@@ -31,6 +31,13 @@ class FrontendWidgetModule {
             'isPro'         => \wp_ai_mind_is_pro(),
             'siteTitle'     => \get_bloginfo( 'name' ),
         ] );
+
+        \wp_enqueue_style(
+            'wp-ai-mind-widget',
+            WP_AI_MIND_URL . 'assets/frontend/widget.css',
+            [],
+            $asset['version']
+        );
     }
 
     public static function render_shortcode( array $atts ): string {

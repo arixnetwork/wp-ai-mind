@@ -1,4 +1,4 @@
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 import { MessageSquare, Plus } from 'lucide-react';
 import ConversationHistory from '../Sidebar/ConversationHistory';
 import MessageList from './MessageList';
@@ -17,6 +17,7 @@ export default function ChatApp() {
     const [ selectedProvider, setSelectedProvider ] = useState( '' );
     const [ selectedModel,    setSelectedModel    ] = useState( '' );
     const [ providers,        setProviders        ] = useState( [] );
+    const skipLoadRef = useRef( false );
 
     useEffect( () => {
         loadConversations();
@@ -24,7 +25,13 @@ export default function ChatApp() {
     }, [] );
 
     useEffect( () => {
-        if ( activeConvId ) loadMessages( activeConvId );
+        if ( activeConvId ) {
+            if ( skipLoadRef.current ) {
+                skipLoadRef.current = false;
+                return;
+            }
+            loadMessages( activeConvId );
+        }
     }, [ activeConvId ] );
 
     async function loadConversations() {
@@ -72,6 +79,7 @@ export default function ChatApp() {
                 data:   { title: content.slice( 0, 60 ) },
             } );
             setConversations( prev => [ conv, ...prev ] );
+            skipLoadRef.current = true;
             setActiveConvId( conv.id );
             convId = conv.id; // capture new ID — do NOT use activeConvId (stale closure)
         }

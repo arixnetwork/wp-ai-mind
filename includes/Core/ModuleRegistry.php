@@ -13,9 +13,9 @@ class ModuleRegistry {
         'summaries'       => true,
         'seo'             => false,
         'images'          => false,
-        'generator'       => false,
+        'generator'       => true,
         'frontend_widget' => false,
-        'usage'           => false,
+        'usage'           => true,
     ];
 
     private array $state;

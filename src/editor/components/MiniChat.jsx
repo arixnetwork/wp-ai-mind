@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from '@wordpress/element';
 import { Send, Loader2 } from 'lucide-react';
 import apiFetch from '@wordpress/api-fetch';
+import MarkdownContent from '../../shared/MarkdownContent';
 
 export default function MiniChat( { postId } ) {
 	const [ messages, setMessages ] = useState( [] );
@@ -61,7 +62,10 @@ export default function MiniChat( { postId } ) {
 						key={ i }
 						className={ `wpaim-editor-mini-chat__bubble wpaim-editor-mini-chat__bubble--${ m.role === 'user' ? 'user' : 'ai' }` }
 					>
-						{ m.content }
+						{ m.role === 'assistant'
+							? <MarkdownContent content={ m.content } />
+							: m.content
+						}
 					</div>
 				) ) }
 				{ isLoading && (

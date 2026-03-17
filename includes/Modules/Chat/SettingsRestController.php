@@ -55,7 +55,7 @@ class SettingsRestController {
             'default_provider'   => sanitize_text_field( (string) get_option( 'wp_ai_mind_default_provider', 'claude' ) ),
             'image_provider'     => sanitize_text_field( (string) get_option( 'wp_ai_mind_image_provider', '' ) ),
             'site_voice'         => sanitize_text_field( (string) get_option( 'wp_ai_mind_site_voice', '' ) ),
-            'enabled_modules'    => (array) get_option( 'wp_ai_mind_enabled_modules', [] ),
+            'enabled_modules'    => array_keys( array_filter( (array) get_option( 'wp_ai_mind_modules', [] ) ) ),
             'api_keys'           => [
                 'claude'     => $this->mask_key( $provider_settings->has_key( 'claude' ) ),
                 'openai'     => $this->mask_key( $provider_settings->has_key( 'openai' ) ),
@@ -98,11 +98,16 @@ class SettingsRestController {
             update_option( 'wp_ai_mind_site_voice', sanitize_text_field( (string) $site_voice ) );
         }
 
-        // Array option — sanitise each element.
+        // Module toggles — convert string list to boolean map matching ModuleRegistry.
         $enabled_modules = $request->get_param( 'enabled_modules' );
         if ( null !== $enabled_modules ) {
-            $sanitised = array_map( 'sanitize_text_field', (array) $enabled_modules );
-            update_option( 'wp_ai_mind_enabled_modules', $sanitised );
+            $enabled_list = array_map( 'sanitize_text_field', (array) $enabled_modules );
+            $all_slugs    = array_keys( ( new \WP_AI_Mind\Core\ModuleRegistry() )->get_all() );
+            $bool_map     = [];
+            foreach ( $all_slugs as $slug ) {
+                $bool_map[ $slug ] = in_array( $slug, $enabled_list, true );
+            }
+            update_option( 'wp_ai_mind_modules', $bool_map );
         }
 
         // API keys — skip any that are the mask placeholder (i.e. unchanged).

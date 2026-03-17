@@ -1,4 +1,5 @@
 import { Cpu } from 'lucide-react';
+import MarkdownContent from '../../../shared/MarkdownContent';
 
 export default function MessageBubble({ message }) {
     const isAI = message.role === 'assistant';
@@ -6,7 +7,10 @@ export default function MessageBubble({ message }) {
     return (
         <div className={ `wpaim-bubble wpaim-bubble--${ isAI ? 'ai' : 'user' }` }>
             <div className="wpaim-bubble__content">
-                <p>{ message.content }</p>
+                { isAI
+                    ? <MarkdownContent content={ message.content } className="wpaim-bubble__markdown" />
+                    : <p>{ message.content }</p>
+                }
             </div>
             { isAI && message.model && (
                 <div className="wpaim-bubble__meta">
