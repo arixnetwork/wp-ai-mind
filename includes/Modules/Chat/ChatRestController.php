@@ -179,7 +179,8 @@ class ChatRestController {
                 'cost_usd' => $final_response->cost_usd,
             ] );
         } catch ( ProviderException $e ) {
-            return new \WP_REST_Response( [ 'message' => $e->getMessage() ], 500 );
+            $status = $e->get_http_status() >= 400 && $e->get_http_status() < 600 ? $e->get_http_status() : 502;
+            return new \WP_REST_Response( [ 'message' => $e->getMessage() ], $status );
         }
     }
 

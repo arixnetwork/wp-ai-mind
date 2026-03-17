@@ -213,7 +213,7 @@ class ToolRegistry {
 			name: 'get_site_info',
 			description: 'Get general information about the WordPress site',
 			parameters: [
-				'properties' => [],
+				'properties' => new \stdClass(),
 				'required'   => [],
 			],
 			capability: 'read',
@@ -239,7 +239,7 @@ class ToolRegistry {
 					'description'  => $tool->description,
 					'input_schema' => [
 						'type'       => 'object',
-						'properties' => $tool->parameters['properties'] ?? [],
+						'properties' => $tool->parameters['properties'] ?: new \stdClass(),
 						'required'   => $tool->parameters['required']   ?? [],
 					],
 				];
@@ -264,7 +264,7 @@ class ToolRegistry {
 						'description' => $tool->description,
 						'parameters'  => [
 							'type'       => 'object',
-							'properties' => $tool->parameters['properties'] ?? [],
+							'properties' => $tool->parameters['properties'] ?: new \stdClass(),
 							'required'   => $tool->parameters['required']   ?? [],
 						],
 					],
@@ -288,7 +288,7 @@ class ToolRegistry {
 					'description' => $tool->description,
 					'parameters'  => [
 						'type'       => 'OBJECT',
-						'properties' => $tool->parameters['properties'] ?? [],
+						'properties' => $tool->parameters['properties'] ?: new \stdClass(),
 						'required'   => $tool->parameters['required']   ?? [],
 					],
 				];
