@@ -6,13 +6,21 @@ namespace WP_AI_Mind\Modules\Chat;
 use WP_AI_Mind\DB\ConversationStore;
 use WP_AI_Mind\Providers\ProviderFactory;
 use WP_AI_Mind\Providers\CompletionRequest;
+use WP_AI_Mind\Providers\CompletionResponse;
 use WP_AI_Mind\Providers\ProviderException;
 use WP_AI_Mind\Settings\ProviderSettings;
+use WP_AI_Mind\Tools\ToolRegistry;
+use WP_AI_Mind\Tools\ToolExecutor;
 use WP_AI_Mind\Voice\VoiceInjector;
 
 class ChatRestController {
 
     private const NAMESPACE = 'wp-ai-mind/v1';
+
+    public function __construct(
+        private readonly ToolRegistry $tool_registry,
+        private readonly ToolExecutor $tool_executor,
+    ) {}
 
     public function register_routes(): void {
 
@@ -65,12 +73,12 @@ class ChatRestController {
     }
 
     public function list_conversations( \WP_REST_Request $request ): \WP_REST_Response {
-        $store = new ConversationStore();
+        $store = $this->make_store();
         return rest_ensure_response( $store->list_for_user( get_current_user_id() ) );
     }
 
     public function create_conversation( \WP_REST_Request $request ): \WP_REST_Response {
-        $store = new ConversationStore();
+        $store = $this->make_store();
         $id    = $store->create(
             $request->get_param( 'title' ),
             $request->get_param( 'post_id' ) ?: null
@@ -79,17 +87,24 @@ class ChatRestController {
     }
 
     public function get_messages( \WP_REST_Request $request ): \WP_REST_Response {
-        $store = new ConversationStore();
+        $store = $this->make_store();
         return rest_ensure_response( $store->get_messages( (int) $request->get_param( 'id' ) ) );
     }
 
     public function send_message( \WP_REST_Request $request ): \WP_REST_Response {
         $conv_id       = (int) $request->get_param( 'id' );
         $content       = $request->get_param( 'content' );
-        $provider_slug = $request->get_param( 'provider' ) ?: get_option( 'wp_ai_mind_default_provider', 'claude' );
+        $provider_slug = $request->get_param( 'provider' ) ?: \get_option( 'wp_ai_mind_default_provider', 'claude' );
         $model         = $request->get_param( 'model' );
 
-        $store = new ConversationStore();
+        $store = $this->make_store();
+
+        // Ownership guard.
+        $conv = $store->get_conversation( $conv_id );
+        if ( ! $conv || (int) $conv['user_id'] !== \get_current_user_id() ) {
+            return new \WP_REST_Response( [ 'message' => 'Forbidden.' ], 403 );
+        }
+
         $store->add_message( $conv_id, 'user', $content );
         $history = $store->get_messages( $conv_id );
 
@@ -98,26 +113,70 @@ class ChatRestController {
             $history
         );
 
-        $injector = new VoiceInjector();
-        $system   = $injector->build_system_prompt( '', get_current_user_id() );
+        $injector = $this->make_voice_injector();
+        $system   = $injector->build_system_prompt( '', \get_current_user_id() );
 
         try {
-            $factory  = new ProviderFactory( new ProviderSettings() );
+            $factory  = $this->make_provider_factory();
             $provider = $factory->make( $provider_slug );
-            $req      = new CompletionRequest(
-                messages: $messages,
-                system:   $system,
-                model:    $model,
-                metadata: [ 'feature' => 'chat', 'post_id' => null ],
-            );
-            $response = $provider->complete( $req );
-            $store->add_message( $conv_id, 'assistant', $response->content, $response->model, $response->total_tokens );
+
+            $tools = $provider->supports_tools()
+                ? $this->tool_registry->get_for_provider( $provider_slug )
+                : [];
+
+            $max_iterations = 5;
+            $iteration      = 0;
+            $final_response = null;
+
+            while ( $iteration < $max_iterations ) {
+                $iteration++;
+
+                $req = new CompletionRequest(
+                    messages:    $messages,
+                    system:      $system,
+                    model:       $model,
+                    metadata:    [ 'feature' => 'chat', 'post_id' => null ],
+                    tools:       $tools,
+                );
+
+                $response = $provider->complete( $req );
+
+                if ( \is_wp_error( $response ) ) {
+                    return new \WP_REST_Response(
+                        [ 'message' => $response->get_error_message() ],
+                        502
+                    );
+                }
+
+                if ( ! $response->is_tool_call() ) {
+                    $final_response = $response;
+                    break;
+                }
+
+                $tool_call   = $response->tool_call;
+                $tool_result = $this->tool_executor->execute(
+                    $tool_call['name'],
+                    $tool_call['arguments'],
+                    \get_current_user_id()
+                );
+
+                $messages = $this->append_tool_exchange( $messages, $provider_slug, $response, $tool_result );
+            }
+
+            if ( null === $final_response ) {
+                return new \WP_REST_Response(
+                    [ 'message' => 'Tool call limit reached without a final response.' ],
+                    500
+                );
+            }
+
+            $store->add_message( $conv_id, 'assistant', $final_response->content, $final_response->model, $final_response->total_tokens );
 
             return rest_ensure_response( [
-                'content'  => $response->content,
-                'model'    => $response->model,
-                'tokens'   => $response->total_tokens,
-                'cost_usd' => $response->cost_usd,
+                'content'  => $final_response->content,
+                'model'    => $final_response->model,
+                'tokens'   => $final_response->total_tokens,
+                'cost_usd' => $final_response->cost_usd,
             ] );
         } catch ( ProviderException $e ) {
             return new \WP_REST_Response( [ 'message' => $e->getMessage() ], 500 );
@@ -125,7 +184,7 @@ class ChatRestController {
     }
 
     public function delete_conversation( \WP_REST_Request $request ): \WP_REST_Response {
-        $store   = new ConversationStore();
+        $store   = $this->make_store();
         $conv_id = (int) $request->get_param( 'id' );
         $conv    = $store->get_conversation( $conv_id );
 
@@ -141,7 +200,7 @@ class ChatRestController {
     }
 
     public function list_providers( \WP_REST_Request $request ): \WP_REST_Response {
-        $factory   = new ProviderFactory( new ProviderSettings() );
+        $factory   = $this->make_provider_factory();
         $available = $factory->get_available();
         $data      = [];
         foreach ( $available as $provider ) {
@@ -158,5 +217,108 @@ class ChatRestController {
             return new \WP_Error( 'rest_forbidden', __( 'Insufficient permissions.', 'wp-ai-mind' ), [ 'status' => 403 ] );
         }
         return true;
+    }
+
+    // ── Overridable factory methods (for testing) ─────────────────────────────
+
+    protected function make_store(): ConversationStore {
+        return new ConversationStore();
+    }
+
+    protected function make_provider_factory(): ProviderFactory {
+        return new ProviderFactory( new ProviderSettings() );
+    }
+
+    protected function make_voice_injector(): VoiceInjector {
+        return new VoiceInjector();
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private function append_tool_exchange(
+        array $messages,
+        string $provider_slug,
+        CompletionResponse $tool_response,
+        array $tool_result
+    ): array {
+        $tool_call   = $tool_response->tool_call;
+        $result_json = \wp_json_encode( $tool_result );
+
+        switch ( $provider_slug ) {
+            case 'claude':
+                $messages[] = [
+                    'role'    => 'assistant',
+                    'content' => $tool_response->raw['content'] ?? [],
+                ];
+                $messages[] = [
+                    'role'    => 'user',
+                    'content' => [
+                        [
+                            'type'        => 'tool_result',
+                            'tool_use_id' => $tool_call['id'],
+                            'content'     => $result_json,
+                        ],
+                    ],
+                ];
+                break;
+
+            case 'openai':
+            case 'grok':
+                $messages[] = [
+                    'role'       => 'assistant',
+                    'tool_calls' => [
+                        [
+                            'id'       => $tool_call['id'],
+                            'type'     => 'function',
+                            'function' => [
+                                'name'      => $tool_call['name'],
+                                'arguments' => \wp_json_encode( $tool_call['arguments'] ),
+                            ],
+                        ],
+                    ],
+                ];
+                $messages[] = [
+                    'role'         => 'tool',
+                    'tool_call_id' => $tool_call['id'],
+                    'content'      => $result_json,
+                ];
+                break;
+
+            case 'gemini':
+                $call_id    = $tool_response->raw['call_id'] ?? $tool_call['id'];
+                $messages[] = [
+                    'role'  => 'model',
+                    'parts' => [
+                        [
+                            'functionCall' => [
+                                'id'   => $call_id,
+                                'name' => $tool_call['name'],
+                                'args' => $tool_call['arguments'],
+                            ],
+                        ],
+                    ],
+                ];
+                $messages[] = [
+                    'role'  => 'user',
+                    'parts' => [
+                        [
+                            'functionResponse' => [
+                                'id'       => $call_id,
+                                'name'     => $tool_call['name'],
+                                'response' => $tool_result,
+                            ],
+                        ],
+                    ],
+                ];
+                break;
+
+            default:
+                $messages[] = [
+                    'role'    => 'user',
+                    'content' => 'Tool result: ' . $result_json,
+                ];
+        }
+
+        return $messages;
     }
 }

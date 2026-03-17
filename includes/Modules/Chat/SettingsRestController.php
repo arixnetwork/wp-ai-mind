@@ -52,16 +52,19 @@ class SettingsRestController {
         $provider_settings = $this->make_provider_settings();
 
         $data = [
-            'default_provider' => sanitize_text_field( (string) get_option( 'wp_ai_mind_default_provider', 'claude' ) ),
-            'image_provider'   => sanitize_text_field( (string) get_option( 'wp_ai_mind_image_provider', '' ) ),
-            'site_voice'       => sanitize_text_field( (string) get_option( 'wp_ai_mind_site_voice', '' ) ),
-            'enabled_modules'  => (array) get_option( 'wp_ai_mind_enabled_modules', [] ),
-            'api_keys'         => [
+            'default_provider'   => sanitize_text_field( (string) get_option( 'wp_ai_mind_default_provider', 'claude' ) ),
+            'image_provider'     => sanitize_text_field( (string) get_option( 'wp_ai_mind_image_provider', '' ) ),
+            'site_voice'         => sanitize_text_field( (string) get_option( 'wp_ai_mind_site_voice', '' ) ),
+            'enabled_modules'    => (array) get_option( 'wp_ai_mind_enabled_modules', [] ),
+            'api_keys'           => [
                 'claude'     => $this->mask_key( $provider_settings->has_key( 'claude' ) ),
                 'openai'     => $this->mask_key( $provider_settings->has_key( 'openai' ) ),
                 'gemini'     => $this->mask_key( $provider_settings->has_key( 'gemini' ) ),
                 'ollama_url' => sanitize_text_field( (string) get_option( 'wp_ai_mind_ollama_url', '' ) ),
             ],
+            'allowed_post_types'   => \get_option( 'wp_ai_mind_allowed_post_types', [ 'post', 'page' ] ),
+            'available_post_types' => $this->get_public_post_types(),
+            'enable_write_tools'   => (bool) \get_option( 'wp_ai_mind_enable_write_tools', false ),
         ];
 
         return rest_ensure_response( $data );
@@ -77,6 +80,7 @@ class SettingsRestController {
      */
     public function save_settings( \WP_REST_Request $request ): \WP_REST_Response {
         $provider_settings = $this->make_provider_settings();
+        $params            = $request->get_json_params() ?: [];
 
         // Scalar options.
         $default_provider = $request->get_param( 'default_provider' );
@@ -115,6 +119,17 @@ class SettingsRestController {
             if ( isset( $api_keys['ollama_url'] ) && '••••••' !== $api_keys['ollama_url'] ) {
                 update_option( 'wp_ai_mind_ollama_url', esc_url_raw( (string) $api_keys['ollama_url'] ) );
             }
+        }
+
+        if ( isset( $params['allowed_post_types'] ) && \is_array( $params['allowed_post_types'] ) ) {
+            $sanitised = \array_map( 'sanitize_key', $params['allowed_post_types'] );
+            $valid     = \array_keys( \get_post_types( [ 'public' => true ] ) );
+            $sanitised = \array_values( \array_intersect( $sanitised, $valid ) );
+            \update_option( 'wp_ai_mind_allowed_post_types', $sanitised );
+        }
+
+        if ( isset( $params['enable_write_tools'] ) ) {
+            \update_option( 'wp_ai_mind_enable_write_tools', (bool) $params['enable_write_tools'] );
         }
 
         return rest_ensure_response( [ 'saved' => true ] );
@@ -167,5 +182,22 @@ class SettingsRestController {
      */
     protected function make_provider_settings(): ProviderSettings {
         return new ProviderSettings();
+    }
+
+    /**
+     * Returns all public post types as slug/label pairs.
+     *
+     * @return array<int, array{slug: string, label: string}>
+     */
+    private function get_public_post_types(): array {
+        $post_types = \get_post_types( [ 'public' => true ], 'objects' );
+        $result     = [];
+        foreach ( $post_types as $slug => $obj ) {
+            $result[] = [
+                'slug'  => $slug,
+                'label' => $obj->labels->singular_name,
+            ];
+        }
+        return $result;
     }
 }

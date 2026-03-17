@@ -1,4 +1,5 @@
-import { Lock } from 'lucide-react';
+import { useState }  from 'react';
+import { Lock }       from 'lucide-react';
 
 const MODULES = [
     {
@@ -55,15 +56,32 @@ export default function FeaturesTab( { settings, saveSettings } ) {
     const enabledModules = settings?.enabled_modules ?? [];
     const isPro          = settings?.is_pro          ?? false;
 
+    const [allowedPostTypes, setAllowedPostTypes] = useState( settings?.allowed_post_types  ?? [ 'post', 'page' ] );
+    const [availablePostTypes]                    = useState( settings?.available_post_types ?? [] );
+    const [enableWriteTools, setEnableWriteTools] = useState( settings?.enable_write_tools   ?? false );
+
     function handleToggle( slug, isProModule ) {
         if ( isProModule && ! isPro ) return; // locked
 
-        const isEnabled  = enabledModules.includes( slug );
+        const isEnabled    = enabledModules.includes( slug );
         const updatedArray = isEnabled
             ? enabledModules.filter( s => s !== slug )
             : [ ...enabledModules, slug ];
 
         saveSettings( { enabled_modules: updatedArray } );
+    }
+
+    function handlePostTypeChange( slug, checked ) {
+        const updated = checked
+            ? [ ...allowedPostTypes, slug ]
+            : allowedPostTypes.filter( s => s !== slug );
+        setAllowedPostTypes( updated );
+        saveSettings( { allowed_post_types: updated } );
+    }
+
+    function handleWriteToolsChange( e ) {
+        setEnableWriteTools( e.target.checked );
+        saveSettings( { enable_write_tools: e.target.checked } );
     }
 
     return (
@@ -124,6 +142,42 @@ export default function FeaturesTab( { settings, saveSettings } ) {
                             </div>
                         );
                     } ) }
+                </div>
+            </section>
+
+            <section className="wpaim-settings-section">
+                <div className="wpaim-settings-section-header">
+                    <h3 className="wpaim-settings-section-title">Post Type Access</h3>
+                    <p className="wpaim-settings-section-desc">
+                        Select which post types the AI assistant can read and write.
+                    </p>
+                </div>
+
+                <div className="wpaim-post-type-list">
+                    { availablePostTypes.map( ( { slug, label } ) => (
+                        <label key={ slug } className="wpaim-checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={ allowedPostTypes.includes( slug ) }
+                                onChange={ ( e ) => handlePostTypeChange( slug, e.target.checked ) }
+                            />
+                            { label } <code>{ slug }</code>
+                        </label>
+                    ) ) }
+                </div>
+
+                <div className="wpaim-settings-field" style={ { marginTop: '1rem' } }>
+                    <label className="wpaim-toggle-label">
+                        <input
+                            type="checkbox"
+                            checked={ enableWriteTools }
+                            onChange={ handleWriteToolsChange }
+                        />
+                        Enable write tools &mdash; allow AI to create and update posts
+                    </label>
+                    <p className="wpaim-settings-section-desc">
+                        When enabled, the AI can draft and publish content directly.
+                    </p>
                 </div>
             </section>
         </div>

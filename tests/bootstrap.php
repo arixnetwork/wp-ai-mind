@@ -32,16 +32,24 @@ if ( ! class_exists( 'WP_Error' ) ) {
 
 if ( ! class_exists( 'WP_REST_Request' ) ) {
     class WP_REST_Request {
-        private array $params = [];
-        public function get_param( string $key ) { return $this->params[ $key ] ?? null; }
+        private array $params     = [];
+        private array $url_params = [];
+        public function __construct( string $method = 'GET', string $route = '' ) {}
+        public function get_param( string $key ) {
+            return $this->url_params[ $key ] ?? $this->params[ $key ] ?? null;
+        }
         public function get_json_params(): array { return $this->params; }
+        public function get_params(): array { return array_merge( $this->params, $this->url_params ); }
         public function set_body_params( array $params ): void { $this->params = array_merge( $this->params, $params ); }
+        public function set_url_params( array $params ): void { $this->url_params = array_merge( $this->url_params, $params ); }
+        public function set_param( string $key, mixed $value ): void { $this->params[ $key ] = $value; }
     }
 }
 
 if ( ! class_exists( 'WP_REST_Response' ) ) {
     class WP_REST_Response {
         public function __construct( public mixed $data = null, public int $status = 200 ) {}
+        public function get_status(): int { return $this->status; }
     }
 }
 

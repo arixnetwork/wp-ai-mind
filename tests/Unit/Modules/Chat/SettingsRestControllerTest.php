@@ -35,6 +35,7 @@ class SettingsRestControllerTest extends TestCase {
 
     public function test_get_settings_returns_masked_keys_when_set(): void {
         Functions\when( 'sanitize_text_field' )->alias( fn( $v ) => $v );
+        Functions\when( 'get_post_types' )->justReturn( [] );
         Functions\when( 'get_option' )->alias( function( $key, $default = '' ) {
             $map = [
                 'wp_ai_mind_default_provider' => 'claude',
@@ -82,6 +83,7 @@ class SettingsRestControllerTest extends TestCase {
 
     public function test_get_settings_returns_empty_string_when_key_not_set(): void {
         Functions\when( 'sanitize_text_field' )->alias( fn( $v ) => $v );
+        Functions\when( 'get_post_types' )->justReturn( [] );
         Functions\when( 'get_option' )->justReturn( '' );
 
         $controller = new class extends SettingsRestController {
@@ -165,6 +167,137 @@ class SettingsRestControllerTest extends TestCase {
         $this->assertContains( 'claude', $providers_saved );
         $this->assertContains( 'gemini', $providers_saved );
         $this->assertNotContains( 'openai', $providers_saved );   // masked — skipped.
+    }
+
+    // ── GET /settings — post type fields ──────────────────────────────────────
+
+    public function test_get_settings_returns_allowed_post_types(): void {
+        Functions\when( 'sanitize_text_field' )->alias( fn( $v ) => $v );
+        Functions\when( 'get_option' )->alias( function( $key, $default = '' ) {
+            if ( 'wp_ai_mind_allowed_post_types' === $key ) {
+                return [ 'post' ];
+            }
+            return is_array( $default ) ? $default : '';
+        } );
+        Functions\when( 'get_post_types' )->justReturn( [] );
+
+        $controller = new class extends SettingsRestController {
+            protected function make_provider_settings(): \WP_AI_Mind\Settings\ProviderSettings {
+                $stub = new class extends \WP_AI_Mind\Settings\ProviderSettings {
+                    public function __construct() {}
+                    public function has_key( string $provider ): bool { return false; }
+                    public function get_api_key( string $provider ): string { return ''; }
+                };
+                return $stub;
+            }
+        };
+
+        $request  = new \WP_REST_Request();
+        $response = $controller->get_settings( $request );
+        $data     = $response->data;
+
+        $this->assertArrayHasKey( 'allowed_post_types', $data );
+        $this->assertSame( [ 'post' ], $data['allowed_post_types'] );
+    }
+
+    public function test_get_settings_returns_available_post_types(): void {
+        Functions\when( 'sanitize_text_field' )->alias( fn( $v ) => $v );
+        Functions\when( 'get_option' )->alias( function( $key, $default = '' ) {
+            return is_array( $default ) ? $default : '';
+        } );
+
+        // Build fake WP post type objects.
+        $fake_post  = new \stdClass();
+        $fake_post->labels = new \stdClass();
+        $fake_post->labels->singular_name = 'Post';
+
+        $fake_page  = new \stdClass();
+        $fake_page->labels = new \stdClass();
+        $fake_page->labels->singular_name = 'Page';
+
+        Functions\when( 'get_post_types' )->justReturn( [
+            'post' => $fake_post,
+            'page' => $fake_page,
+        ] );
+
+        $controller = new class extends SettingsRestController {
+            protected function make_provider_settings(): \WP_AI_Mind\Settings\ProviderSettings {
+                $stub = new class extends \WP_AI_Mind\Settings\ProviderSettings {
+                    public function __construct() {}
+                    public function has_key( string $provider ): bool { return false; }
+                    public function get_api_key( string $provider ): string { return ''; }
+                };
+                return $stub;
+            }
+        };
+
+        $request  = new \WP_REST_Request();
+        $response = $controller->get_settings( $request );
+        $data     = $response->data;
+
+        $this->assertArrayHasKey( 'available_post_types', $data );
+        $slugs = array_column( $data['available_post_types'], 'slug' );
+        $this->assertContains( 'post', $slugs );
+        $this->assertContains( 'page', $slugs );
+    }
+
+    // ── POST /settings — post type fields ─────────────────────────────────────
+
+    public function test_post_settings_saves_allowed_post_types(): void {
+        $stored = [];
+        Functions\when( 'update_option' )->alias( function( $k, $v ) use ( &$stored ) {
+            $stored[ $k ] = $v;
+            return true;
+        } );
+        Functions\when( 'sanitize_text_field' )->alias( fn( $v ) => $v );
+        Functions\when( 'sanitize_key' )->alias( fn( $v ) => $v );
+        Functions\when( 'get_post_types' )->justReturn( [ 'post' => true, 'page' => true ] );
+
+        $controller = new class extends SettingsRestController {
+            protected function make_provider_settings(): \WP_AI_Mind\Settings\ProviderSettings {
+                $stub = new class extends \WP_AI_Mind\Settings\ProviderSettings {
+                    public function __construct() {}
+                    public function set_api_key( string $provider, string $key ): void {}
+                };
+                return $stub;
+            }
+        };
+
+        $request = new \WP_REST_Request();
+        $request->set_body_params( [ 'allowed_post_types' => [ 'post', 'page' ] ] );
+
+        $controller->save_settings( $request );
+
+        $this->assertArrayHasKey( 'wp_ai_mind_allowed_post_types', $stored );
+        $this->assertSame( [ 'post', 'page' ], $stored['wp_ai_mind_allowed_post_types'] );
+    }
+
+    public function test_post_settings_saves_enable_write_tools(): void {
+        $stored = [];
+        Functions\when( 'update_option' )->alias( function( $k, $v ) use ( &$stored ) {
+            $stored[ $k ] = $v;
+            return true;
+        } );
+        Functions\when( 'sanitize_text_field' )->alias( fn( $v ) => $v );
+        Functions\when( 'get_post_types' )->justReturn( [] );
+
+        $controller = new class extends SettingsRestController {
+            protected function make_provider_settings(): \WP_AI_Mind\Settings\ProviderSettings {
+                $stub = new class extends \WP_AI_Mind\Settings\ProviderSettings {
+                    public function __construct() {}
+                    public function set_api_key( string $provider, string $key ): void {}
+                };
+                return $stub;
+            }
+        };
+
+        $request = new \WP_REST_Request();
+        $request->set_body_params( [ 'enable_write_tools' => true ] );
+
+        $controller->save_settings( $request );
+
+        $this->assertArrayHasKey( 'wp_ai_mind_enable_write_tools', $stored );
+        $this->assertTrue( $stored['wp_ai_mind_enable_write_tools'] );
     }
 
     public function test_save_settings_skips_masked_api_keys(): void {
