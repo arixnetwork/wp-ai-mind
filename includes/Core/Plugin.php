@@ -45,6 +45,7 @@ class Plugin {
         add_action( 'wp_ai_mind_register_menu', [ \WP_AI_Mind\Admin\AdminMenu::class, 'register' ] );
         if ( $this->modules->is_enabled( 'chat' ) ) {
             add_action( 'plugins_loaded', [ \WP_AI_Mind\Modules\Chat\ChatModule::class, 'register' ], 20 );
+            \WP_AI_Mind\Modules\Editor\EditorModule::register();
         }
     }
 
