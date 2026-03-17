@@ -5,3 +5,5 @@ dist/
 freemius/
 *.log
 composer.phar
+test-results/
+.phpunit.result.cache
