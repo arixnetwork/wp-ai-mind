@@ -28,13 +28,13 @@ class ToolExecutor {
 	 */
 	public function execute( string $tool_name, array $args, int $user_id ): array {
 		$dispatch = [
-			'get_recent_posts'  => [ $this, 'get_recent_posts' ],
-			'get_post_content'  => [ $this, 'get_post_content' ],
-			'search_posts'      => [ $this, 'search_posts' ],
-			'create_post'       => [ $this, 'create_post' ],
-			'update_post'       => [ $this, 'update_post' ],
-			'get_pages'         => [ $this, 'get_pages' ],
-			'get_site_info'     => [ $this, 'get_site_info' ],
+			'get_recent_posts' => [ $this, 'get_recent_posts' ],
+			'get_post_content' => [ $this, 'get_post_content' ],
+			'search_posts'     => [ $this, 'search_posts' ],
+			'create_post'      => [ $this, 'create_post' ],
+			'update_post'      => [ $this, 'update_post' ],
+			'get_pages'        => [ $this, 'get_pages' ],
+			'get_site_info'    => [ $this, 'get_site_info' ],
 		];
 
 		if ( ! isset( $dispatch[ $tool_name ] ) ) {
@@ -64,13 +64,15 @@ class ToolExecutor {
 		$count  = min( max( 1, (int) ( $args['count'] ?? 5 ) ), 20 );
 		$status = \sanitize_key( $args['status'] ?? 'publish' );
 
-		$query = new \WP_Query( [
-			'post_type'      => $post_type,
-			'posts_per_page' => $count,
-			'post_status'    => $status,
-			'fields'         => 'all',
-			'no_found_rows'  => true,
-		] );
+		$query = new \WP_Query(
+			[
+				'post_type'      => $post_type,
+				'posts_per_page' => $count,
+				'post_status'    => $status,
+				'fields'         => 'all',
+				'no_found_rows'  => true,
+			]
+		);
 
 		$posts = [];
 		foreach ( $query->posts as $post ) {
@@ -79,7 +81,7 @@ class ToolExecutor {
 				'title'   => \html_entity_decode( $post->post_title, ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 				'status'  => $post->post_status,
 				'date'    => $post->post_date,
-				'excerpt' => \wp_trim_words( \wp_strip_all_tags( $post->post_excerpt ?: $post->post_content ), 100 ),
+				'excerpt' => \wp_trim_words( \wp_strip_all_tags( ! empty( $post->post_excerpt ) ? $post->post_excerpt : $post->post_content ), 100 ),
 			];
 		}
 		\wp_reset_postdata();
@@ -110,7 +112,7 @@ class ToolExecutor {
 		}
 
 		$content = \wp_trim_words(
-			\wp_strip_all_tags( \apply_filters( 'the_content', $post->post_content ) ),
+			\wp_strip_all_tags( \apply_filters( 'the_content', $post->post_content ) ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 			500
 		);
 
@@ -143,19 +145,21 @@ class ToolExecutor {
 
 		$count = min( max( 1, (int) ( $args['count'] ?? 5 ) ), 20 );
 
-		$query = new \WP_Query( [
-			's'              => $search_query,
-			'post_type'      => $post_type,
-			'posts_per_page' => $count,
-			'no_found_rows'  => true,
-		] );
+		$query = new \WP_Query(
+			[
+				's'              => $search_query,
+				'post_type'      => $post_type,
+				'posts_per_page' => $count,
+				'no_found_rows'  => true,
+			]
+		);
 
 		$posts = [];
 		foreach ( $query->posts as $post ) {
 			$posts[] = [
 				'id'      => $post->ID,
 				'title'   => \html_entity_decode( $post->post_title, ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
-				'excerpt' => \wp_trim_words( \wp_strip_all_tags( $post->post_excerpt ?: $post->post_content ), 50 ),
+				'excerpt' => \wp_trim_words( \wp_strip_all_tags( ! empty( $post->post_excerpt ) ? $post->post_excerpt : $post->post_content ), 50 ),
 				'status'  => $post->post_status,
 			];
 		}
@@ -269,12 +273,14 @@ class ToolExecutor {
 
 		$count = min( max( 1, (int) ( $args['count'] ?? 10 ) ), 20 );
 
-		$query = new \WP_Query( [
-			'post_type'      => 'page',
-			'posts_per_page' => $count,
-			'post_status'    => 'publish',
-			'no_found_rows'  => true,
-		] );
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'page',
+				'posts_per_page' => $count,
+				'post_status'    => 'publish',
+				'no_found_rows'  => true,
+			]
+		);
 
 		$pages = [];
 		foreach ( $query->posts as $post ) {

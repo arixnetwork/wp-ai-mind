@@ -16,19 +16,31 @@ class GeminiProvider extends AbstractProvider {
 	];
 
 	private const PRICING = [
-		'gemini-2.5-pro'   => [ 'in' => 1.25,  'out' => 10.0 ],
-		'gemini-2.5-flash' => [ 'in' => 0.075, 'out' => 0.30 ],
-		'gemini-2.0-flash' => [ 'in' => 0.10,  'out' => 0.40 ],
+		'gemini-2.5-pro'   => [
+			'in'  => 1.25,
+			'out' => 10.0,
+		],
+		'gemini-2.5-flash' => [
+			'in'  => 0.075,
+			'out' => 0.30,
+		],
+		'gemini-2.0-flash' => [
+			'in'  => 0.10,
+			'out' => 0.40,
+		],
 	];
 
 	public function __construct( private readonly string $api_key ) {}
 
-	public function get_slug(): string   { return 'gemini'; }
-	public function get_models(): array  { return self::MODELS; }
-	public function is_available(): bool { return '' !== $this->api_key; }
+	public function get_slug(): string {
+		return 'gemini'; }
+	public function get_models(): array {
+		return self::MODELS; }
+	public function is_available(): bool {
+		return '' !== $this->api_key; }
 
 	protected function do_complete( CompletionRequest $request ): CompletionResponse {
-		$model    = $request->model ?: self::DEFAULT_MODEL;
+		$model    = ! empty( $request->model ) ? $request->model : self::DEFAULT_MODEL;
 		$contents = $this->messages_to_contents( $request->messages );
 		$body     = [ 'contents' => $contents ];
 		if ( '' !== $request->system ) {
@@ -78,7 +90,10 @@ class GeminiProvider extends AbstractProvider {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
 		$attachment_id = media_handle_sideload(
-			[ 'name' => $filename, 'tmp_name' => $tmp_file ],
+			[
+				'name'     => $filename,
+				'tmp_name' => $tmp_file,
+			],
 			0,
 			$prompt
 		);
@@ -87,7 +102,7 @@ class GeminiProvider extends AbstractProvider {
 
 		if ( is_wp_error( $attachment_id ) ) {
 			throw new ProviderException(
-				'Failed to save Imagen 3 image: ' . $attachment_id->get_error_message(),
+				'Failed to save Imagen 3 image: ' . $attachment_id->get_error_message(), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 				'gemini'
 			);
 		}
@@ -96,22 +111,28 @@ class GeminiProvider extends AbstractProvider {
 	}
 
 	private function messages_to_contents( array $messages ): array {
-		return array_map( fn( $m ) => [
-			'role'  => $m['role'] === 'assistant' ? 'model' : 'user',
-			'parts' => [ [ 'text' => $m['content'] ] ],
-		], $messages );
+		return array_map(
+			fn( $m ) => [
+				'role'  => 'assistant' === $m['role'] ? 'model' : 'user',
+				'parts' => [ [ 'text' => $m['content'] ] ],
+			],
+			$messages
+		);
 	}
 
 	private function post( string $path, array $body ): array {
 		$url      = self::API_BASE . $path . '?key=' . rawurlencode( $this->api_key );
-		$response = wp_remote_post( $url, [
-			'timeout' => WP_AI_MIND_HTTP_TIMEOUT,
-			'headers' => [ 'Content-Type' => 'application/json' ],
-			'body'    => wp_json_encode( $body ),
-		] );
+		$response = wp_remote_post(
+			$url,
+			[
+				'timeout' => WP_AI_MIND_HTTP_TIMEOUT,
+				'headers' => [ 'Content-Type' => 'application/json' ],
+				'body'    => wp_json_encode( $body ),
+			]
+		);
 
 		if ( is_wp_error( $response ) ) {
-			throw new ProviderException( $response->get_error_message(), 'gemini' );
+			throw new ProviderException( $response->get_error_message(), 'gemini' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
@@ -119,14 +140,14 @@ class GeminiProvider extends AbstractProvider {
 
 		if ( $code < 200 || $code >= 300 ) {
 			$msg = $data['error']['message'] ?? "HTTP {$code}";
-			throw new ProviderException( $msg, 'gemini', $code, $data );
+			throw new ProviderException( $msg, 'gemini', $code, $data ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 		return $data;
 	}
 
 	private function parse_response( array $data, string $model ): CompletionResponse {
 		$meta       = $data['usageMetadata'] ?? [];
-		$in_tokens  = (int) ( $meta['promptTokenCount']     ?? 0 );
+		$in_tokens  = (int) ( $meta['promptTokenCount'] ?? 0 );
 		$out_tokens = (int) ( $meta['candidatesTokenCount'] ?? 0 );
 		$pricing    = self::PRICING[ $model ] ?? self::PRICING[ self::DEFAULT_MODEL ];
 		$cost       = ( $in_tokens / 1_000_000 * $pricing['in'] ) + ( $out_tokens / 1_000_000 * $pricing['out'] );
@@ -135,7 +156,7 @@ class GeminiProvider extends AbstractProvider {
 		$parts = $data['candidates'][0]['content']['parts'] ?? [];
 		foreach ( $parts as $part ) {
 			if ( isset( $part['functionCall'] ) ) {
-				$fc      = $part['functionCall'];
+				$fc = $part['functionCall'];
 				// Gemini does not always return a stable call ID; generate one for history use.
 				$call_id = $fc['id'] ?? \uniqid( 'gemini_', true );
 				return new CompletionResponse(
@@ -144,7 +165,10 @@ class GeminiProvider extends AbstractProvider {
 					prompt_tokens: $in_tokens,
 					completion_tokens: $out_tokens,
 					cost_usd: $cost,
-					raw: [ 'data' => $data, 'call_id' => $call_id ], // preserve generated call_id for history reconstruction
+					raw: [
+						'data'    => $data,
+						'call_id' => $call_id,
+					], // preserve generated call_id for history reconstruction
 					tool_call: [
 						'id'        => $call_id,
 						'name'      => $fc['name'],

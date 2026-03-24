@@ -1,7 +1,10 @@
 <?php
 declare( strict_types=1 );
 
+// phpcs:disable Universal.Namespaces.DisallowCurlyBraceSyntax.Forbidden
 namespace WP_AI_Mind\Core {
+	// phpcs:enable Universal.Namespaces.DisallowCurlyBraceSyntax.Forbidden
+
 	/**
 	 * Free/Pro gate. Single abstraction — swap the backend without touching callers.
 	 *
@@ -17,7 +20,7 @@ namespace WP_AI_Mind\Core {
 			if ( function_exists( 'wp_ai_mind_freemius' ) ) {
 				try {
 					return \wp_ai_mind_freemius()->can_use_premium_code__premium_only();
-				} catch ( \Throwable $e ) {
+				} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 					// Freemius not yet initialised — fall through to option check.
 				}
 			}
@@ -26,7 +29,7 @@ namespace WP_AI_Mind\Core {
 		}
 
 		/** Called from Freemius webhook / activation in P6. */
-		public static function activate( string $licence_key ): bool {
+		public static function activate( string $licence_key ): bool { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 			// Stub — full Freemius activation in P6.
 			update_option( self::OPTION_KEY, 'active' );
 			return true;
@@ -38,6 +41,7 @@ namespace WP_AI_Mind\Core {
 	}
 }
 
+// phpcs:disable
 namespace {
 	// Global helper — all callers use this, never the class directly.
 	if ( ! function_exists( 'wp_ai_mind_is_pro' ) ) {
@@ -46,3 +50,4 @@ namespace {
 		}
 	}
 }
+// phpcs:enable

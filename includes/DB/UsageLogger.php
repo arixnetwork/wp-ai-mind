@@ -19,7 +19,7 @@ class UsageLogger {
 		$wpdb->insert(
 			$table,
 			[
-				'user_id'           => $user_id ?: get_current_user_id(),
+				'user_id'           => ! empty( $user_id ) ? $user_id : get_current_user_id(),
 				'feature'           => sanitize_key( $feature ),
 				'provider'          => sanitize_key( $provider ),
 				'model'             => sanitize_text_field( $response->model ),

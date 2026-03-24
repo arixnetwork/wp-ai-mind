@@ -17,16 +17,28 @@ class ClaudeProvider extends AbstractProvider {
 
 	// Cost per 1M tokens (input/output) in USD.
 	private const PRICING = [
-		'claude-opus-4-6'           => [ 'in' => 15.0,  'out' => 75.0  ],
-		'claude-sonnet-4-6'         => [ 'in' => 3.0,   'out' => 15.0  ],
-		'claude-haiku-4-5-20251001' => [ 'in' => 0.25,  'out' => 1.25  ],
+		'claude-opus-4-6'           => [
+			'in'  => 15.0,
+			'out' => 75.0,
+		],
+		'claude-sonnet-4-6'         => [
+			'in'  => 3.0,
+			'out' => 15.0,
+		],
+		'claude-haiku-4-5-20251001' => [
+			'in'  => 0.25,
+			'out' => 1.25,
+		],
 	];
 
 	public function __construct( private readonly string $api_key ) {}
 
-	public function get_slug(): string   { return 'claude'; }
-	public function get_models(): array  { return self::MODELS; }
-	public function is_available(): bool { return '' !== $this->api_key; }
+	public function get_slug(): string {
+		return 'claude'; }
+	public function get_models(): array {
+		return self::MODELS; }
+	public function is_available(): bool {
+		return '' !== $this->api_key; }
 
 	protected function do_complete( CompletionRequest $request ): CompletionResponse {
 		$body = $this->build_body( $request );
@@ -57,7 +69,7 @@ class ClaudeProvider extends AbstractProvider {
 
 	private function build_body( CompletionRequest $request ): array {
 		$body = [
-			'model'      => $request->model ?: self::DEFAULT_MODEL,
+			'model'      => ! empty( $request->model ) ? $request->model : self::DEFAULT_MODEL,
 			'max_tokens' => $request->max_tokens,
 			'messages'   => $request->messages,
 		];
@@ -71,18 +83,21 @@ class ClaudeProvider extends AbstractProvider {
 	}
 
 	private function post( string $path, array $body ): array {
-		$response = wp_remote_post( self::API_BASE . $path, [
-			'timeout' => WP_AI_MIND_HTTP_TIMEOUT,
-			'headers' => [
-				'x-api-key'         => $this->api_key,
-				'anthropic-version' => self::API_VERSION,
-				'content-type'      => 'application/json',
-			],
-			'body'    => wp_json_encode( $body ),
-		] );
+		$response = wp_remote_post(
+			self::API_BASE . $path,
+			[
+				'timeout' => WP_AI_MIND_HTTP_TIMEOUT,
+				'headers' => [
+					'x-api-key'         => $this->api_key,
+					'anthropic-version' => self::API_VERSION,
+					'content-type'      => 'application/json',
+				],
+				'body'    => wp_json_encode( $body ),
+			]
+		);
 
 		if ( is_wp_error( $response ) ) {
-			throw new ProviderException( $response->get_error_message(), 'claude' );
+			throw new ProviderException( $response->get_error_message(), 'claude' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
@@ -90,15 +105,15 @@ class ClaudeProvider extends AbstractProvider {
 
 		if ( $code < 200 || $code >= 300 ) {
 			$msg = $data['error']['message'] ?? "HTTP {$code}";
-			throw new ProviderException( $msg, 'claude', $code, $data );
+			throw new ProviderException( $msg, 'claude', $code, $data ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		return $data;
 	}
 
 	private function parse_response( array $data, CompletionRequest $request ): CompletionResponse {
-		$model      = $data['model'] ?? ( $request->model ?: self::DEFAULT_MODEL );
-		$in_tokens  = (int) ( $data['usage']['input_tokens']  ?? 0 );
+		$model      = $data['model'] ?? ( ! empty( $request->model ) ? $request->model : self::DEFAULT_MODEL );
+		$in_tokens  = (int) ( $data['usage']['input_tokens'] ?? 0 );
 		$out_tokens = (int) ( $data['usage']['output_tokens'] ?? 0 );
 		$pricing    = self::PRICING[ $model ] ?? self::PRICING[ self::DEFAULT_MODEL ];
 		$cost       = ( $in_tokens / 1_000_000 * $pricing['in'] ) + ( $out_tokens / 1_000_000 * $pricing['out'] );

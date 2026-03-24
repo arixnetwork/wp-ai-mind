@@ -16,24 +16,45 @@ class OpenAIProvider extends AbstractProvider {
 	];
 
 	private const PRICING = [
-		'gpt-4o'      => [ 'in' => 2.5,  'out' => 10.0 ],
-		'gpt-4o-mini' => [ 'in' => 0.15, 'out' => 0.60 ],
-		'o3'          => [ 'in' => 10.0, 'out' => 40.0 ],
-		'o4-mini'     => [ 'in' => 1.1,  'out' => 4.4  ],
+		'gpt-4o'      => [
+			'in'  => 2.5,
+			'out' => 10.0,
+		],
+		'gpt-4o-mini' => [
+			'in'  => 0.15,
+			'out' => 0.60,
+		],
+		'o3'          => [
+			'in'  => 10.0,
+			'out' => 40.0,
+		],
+		'o4-mini'     => [
+			'in'  => 1.1,
+			'out' => 4.4,
+		],
 	];
 
 	public function __construct( private readonly string $api_key ) {}
 
-	public function get_slug(): string   { return 'openai'; }
-	public function get_models(): array  { return self::MODELS; }
-	public function is_available(): bool { return '' !== $this->api_key; }
+	public function get_slug(): string {
+		return 'openai'; }
+	public function get_models(): array {
+		return self::MODELS; }
+	public function is_available(): bool {
+		return '' !== $this->api_key; }
 
 	protected function do_complete( CompletionRequest $request ): CompletionResponse {
 		$messages = $request->messages;
 		if ( '' !== $request->system ) {
-			array_unshift( $messages, [ 'role' => 'system', 'content' => $request->system ] );
+			array_unshift(
+				$messages,
+				[
+					'role'    => 'system',
+					'content' => $request->system,
+				]
+			);
 		}
-		$model = $request->model ?: self::DEFAULT_MODEL;
+		$model = ! empty( $request->model ) ? $request->model : self::DEFAULT_MODEL;
 		$body  = [
 			'model'       => $model,
 			'messages'    => $messages,
@@ -62,11 +83,11 @@ class OpenAIProvider extends AbstractProvider {
 			'model'   => 'dall-e-3',
 			'prompt'  => $prompt,
 			'n'       => 1,
-			'size'    => $options['size']    ?? '1024x1024',
+			'size'    => $options['size'] ?? '1024x1024',
 			'quality' => $options['quality'] ?? 'hd',
 		];
-		$raw = $this->post( '/images/generations', $body );
-		$url = $raw['data'][0]['url'] ?? '';
+		$raw  = $this->post( '/images/generations', $body );
+		$url  = $raw['data'][0]['url'] ?? '';
 		if ( empty( $url ) ) {
 			throw new ProviderException( 'No image URL in response', 'openai' );
 		}
@@ -74,17 +95,20 @@ class OpenAIProvider extends AbstractProvider {
 	}
 
 	private function post( string $path, array $body ): array {
-		$response = wp_remote_post( self::API_BASE . $path, [
-			'timeout' => WP_AI_MIND_HTTP_TIMEOUT,
-			'headers' => [
-				'Authorization' => 'Bearer ' . $this->api_key,
-				'Content-Type'  => 'application/json',
-			],
-			'body'    => wp_json_encode( $body ),
-		] );
+		$response = wp_remote_post(
+			self::API_BASE . $path,
+			[
+				'timeout' => WP_AI_MIND_HTTP_TIMEOUT,
+				'headers' => [
+					'Authorization' => 'Bearer ' . $this->api_key,
+					'Content-Type'  => 'application/json',
+				],
+				'body'    => wp_json_encode( $body ),
+			]
+		);
 
 		if ( is_wp_error( $response ) ) {
-			throw new ProviderException( $response->get_error_message(), 'openai' );
+			throw new ProviderException( $response->get_error_message(), 'openai' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
@@ -92,14 +116,14 @@ class OpenAIProvider extends AbstractProvider {
 
 		if ( $code < 200 || $code >= 300 ) {
 			$msg = $data['error']['message'] ?? "HTTP {$code}";
-			throw new ProviderException( $msg, 'openai', $code, $data );
+			throw new ProviderException( $msg, 'openai', $code, $data ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		return $data;
 	}
 
 	private function parse_response( array $data, string $model ): CompletionResponse {
-		$in_tokens  = (int) ( $data['usage']['prompt_tokens']     ?? 0 );
+		$in_tokens  = (int) ( $data['usage']['prompt_tokens'] ?? 0 );
 		$out_tokens = (int) ( $data['usage']['completion_tokens'] ?? 0 );
 		$pricing    = self::PRICING[ $model ] ?? self::PRICING[ self::DEFAULT_MODEL ];
 		$cost       = ( $in_tokens / 1_000_000 * $pricing['in'] ) + ( $out_tokens / 1_000_000 * $pricing['out'] );

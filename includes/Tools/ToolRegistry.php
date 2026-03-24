@@ -33,6 +33,9 @@ class ToolRegistry {
 		$tools = array_filter(
 			$this->tools,
 			static function ( ToolDefinition $tool ) use ( $write_enabled ): bool {
+				if ( in_array( $tool->name, [ 'create_post', 'update_post' ], true ) ) {
+					return false; // Used programmatically only — not exposed to the AI.
+				}
 				return ! $tool->requires_write_tools || $write_enabled;
 			}
 		);
@@ -72,20 +75,20 @@ class ToolRegistry {
 						'description' => 'The post type to retrieve.',
 						'default'     => 'post',
 					],
-					'count' => [
+					'count'     => [
 						'type'        => 'integer',
 						'description' => 'Number of posts to return (1–20).',
 						'minimum'     => 1,
 						'maximum'     => 20,
 						'default'     => 5,
 					],
-					'status' => [
+					'status'    => [
 						'type'        => 'string',
 						'description' => 'Post status filter.',
 						'default'     => 'publish',
 					],
 				],
-				'required' => [],
+				'required'   => [],
 			],
 			capability: 'edit_posts',
 			requires_write_tools: false,
@@ -101,7 +104,7 @@ class ToolRegistry {
 						'description' => 'The ID of the post to retrieve.',
 					],
 				],
-				'required' => [ 'post_id' ],
+				'required'   => [ 'post_id' ],
 			],
 			capability: 'edit_posts',
 			requires_write_tools: false,
@@ -112,7 +115,7 @@ class ToolRegistry {
 			description: 'Search for posts or pages matching a keyword query',
 			parameters: [
 				'properties' => [
-					'query' => [
+					'query'     => [
 						'type'        => 'string',
 						'description' => 'The search query string.',
 					],
@@ -121,13 +124,13 @@ class ToolRegistry {
 						'description' => 'Post type to search within.',
 						'default'     => 'post',
 					],
-					'count' => [
+					'count'     => [
 						'type'        => 'integer',
 						'description' => 'Number of results to return.',
 						'default'     => 5,
 					],
 				],
-				'required' => [ 'query' ],
+				'required'   => [ 'query' ],
 			],
 			capability: 'edit_posts',
 			requires_write_tools: false,
@@ -138,15 +141,15 @@ class ToolRegistry {
 			description: 'Create a new WordPress post or page',
 			parameters: [
 				'properties' => [
-					'title' => [
+					'title'     => [
 						'type'        => 'string',
 						'description' => 'The post title.',
 					],
-					'content' => [
+					'content'   => [
 						'type'        => 'string',
 						'description' => 'The post body content.',
 					],
-					'status' => [
+					'status'    => [
 						'type'        => 'string',
 						'description' => 'Publication status.',
 						'enum'        => [ 'draft', 'publish', 'pending' ],
@@ -158,9 +161,66 @@ class ToolRegistry {
 						'default'     => 'post',
 					],
 				],
-				'required' => [ 'title' ],
+				'required'   => [ 'title' ],
 			],
 			capability: 'edit_posts',
+			requires_write_tools: true,
+		);
+
+		$this->tools[] = new ToolDefinition(
+			name:                'plan_post',
+			description:         'Propose a new WordPress blog post or page for user approval. Use this instead of create_post. Provide a title, publication status, and a brief outline of what the post will cover. Do not write the full content — the content will be generated after the user approves the plan.',
+			parameters:          [
+				'type'       => 'object',
+				'properties' => [
+					'title'     => [
+						'type'        => 'string',
+						'description' => 'The post title.',
+					],
+					'status'    => [
+						'type'        => 'string',
+						'enum'        => [ 'draft', 'publish', 'pending' ],
+						'description' => 'Publication status.',
+					],
+					'outline'   => [
+						'type'        => 'string',
+						'description' => 'A brief outline of the post: key sections, topics, and angle. 1–3 sentences.',
+					],
+					'post_type' => [
+						'type'        => 'string',
+						'enum'        => [ 'post', 'page' ],
+						'description' => 'Post type. Defaults to post.',
+					],
+				],
+				'required'   => [ 'title' ],
+			],
+			capability:          'edit_posts',
+			requires_write_tools: true,
+		);
+
+		$this->tools[] = new ToolDefinition(
+			name:                'plan_update',
+			description:         'Propose an update to an existing WordPress post for user approval. Provide the post_id and a description of the changes to make. Do not write the full content — it will be generated after the user approves.',
+			parameters:          [
+				'type'       => 'object',
+				'properties' => [
+					'post_id' => [
+						'type'        => 'integer',
+						'description' => 'The ID of the post to update.',
+					],
+					'changes' => [
+						'type'        => 'string',
+						'description' => 'Description of what to add, change, or remove. Be specific (e.g. "Add stages 3 and 4, matching the tone of stage 1").',
+					],
+					'status'  => [
+						'type'        => 'string',
+						'enum'        => [ 'draft', 'publish', 'pending' ],
+						'description' => 'New publication status, if changing.',
+					],
+				],
+				'required'   => [ 'post_id', 'changes' ],
+			],
+			capability:          'edit_posts',
 			requires_write_tools: true,
 		);
 
@@ -173,7 +233,7 @@ class ToolRegistry {
 						'type'        => 'integer',
 						'description' => 'The ID of the post to update.',
 					],
-					'title' => [
+					'title'   => [
 						'type'        => 'string',
 						'description' => 'New post title.',
 					],
@@ -181,12 +241,12 @@ class ToolRegistry {
 						'type'        => 'string',
 						'description' => 'New post body content.',
 					],
-					'status' => [
+					'status'  => [
 						'type'        => 'string',
 						'description' => 'New publication status.',
 					],
 				],
-				'required' => [ 'post_id' ],
+				'required'   => [ 'post_id' ],
 			],
 			capability: 'edit_posts',
 			requires_write_tools: true,
@@ -203,7 +263,7 @@ class ToolRegistry {
 						'default'     => 10,
 					],
 				],
-				'required' => [],
+				'required'   => [],
 			],
 			capability: 'edit_posts',
 			requires_write_tools: false,
@@ -239,8 +299,8 @@ class ToolRegistry {
 					'description'  => $tool->description,
 					'input_schema' => [
 						'type'       => 'object',
-						'properties' => $tool->parameters['properties'] ?: new \stdClass(),
-						'required'   => $tool->parameters['required']   ?? [],
+						'properties' => ! empty( $tool->parameters['properties'] ) ? $tool->parameters['properties'] : new \stdClass(),
+						'required'   => $tool->parameters['required'] ?? [],
 					],
 				];
 			},
@@ -264,8 +324,8 @@ class ToolRegistry {
 						'description' => $tool->description,
 						'parameters'  => [
 							'type'       => 'object',
-							'properties' => $tool->parameters['properties'] ?: new \stdClass(),
-							'required'   => $tool->parameters['required']   ?? [],
+							'properties' => ! empty( $tool->parameters['properties'] ) ? $tool->parameters['properties'] : new \stdClass(),
+							'required'   => $tool->parameters['required'] ?? [],
 						],
 					],
 				];
@@ -288,8 +348,8 @@ class ToolRegistry {
 					'description' => $tool->description,
 					'parameters'  => [
 						'type'       => 'OBJECT',
-						'properties' => $tool->parameters['properties'] ?: new \stdClass(),
-						'required'   => $tool->parameters['required']   ?? [],
+						'properties' => ! empty( $tool->parameters['properties'] ) ? $tool->parameters['properties'] : new \stdClass(),
+						'required'   => $tool->parameters['required'] ?? [],
 					],
 				];
 			},

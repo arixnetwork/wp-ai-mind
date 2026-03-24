@@ -48,7 +48,7 @@ abstract class AbstractProvider implements ProviderInterface {
 
 		$tmp = download_url( $image_url );
 		if ( is_wp_error( $tmp ) ) {
-			throw new ProviderException( 'Failed to download image: ' . $tmp->get_error_message(), $this->get_slug() );
+			throw new ProviderException( 'Failed to download image: ' . $tmp->get_error_message(), $this->get_slug() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		$file_array = [
@@ -60,7 +60,7 @@ abstract class AbstractProvider implements ProviderInterface {
 		@unlink( $tmp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 
 		if ( is_wp_error( $attachment_id ) ) {
-			throw new ProviderException( 'Failed to save image: ' . $attachment_id->get_error_message(), $this->get_slug() );
+			throw new ProviderException( 'Failed to save image: ' . $attachment_id->get_error_message(), $this->get_slug() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 
 		update_post_meta( $attachment_id, '_wp_ai_mind_prompt', sanitize_textarea_field( $prompt ) );
@@ -76,7 +76,7 @@ abstract class AbstractProvider implements ProviderInterface {
 				return $fn();
 			} catch ( ProviderException $e ) {
 				$last_exception = $e;
-				if ( ! $e->is_retryable() || $attempt === self::MAX_RETRIES ) {
+				if ( ! $e->is_retryable() || self::MAX_RETRIES === $attempt ) {
 					throw $e;
 				}
 				// Exponential back-off: 500ms, 1000ms, 2000ms.

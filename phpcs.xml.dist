@@ -9,6 +9,9 @@
   <rule ref="WordPress-Extra">
     <!-- Allow short array syntax -->
     <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+    <!-- Plugin uses PSR-4 autoloading (PascalCase filenames) — WP filename rules do not apply -->
+    <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+    <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
   </rule>
   <rule ref="WordPress.WP.I18n">
     <properties>

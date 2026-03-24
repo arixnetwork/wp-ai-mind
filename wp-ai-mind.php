@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       WP AI Mind
- * Plugin URI:        https://wpaim.ind/
+ * Plugin URI:        https://njohansson.eu/wp-ai-mind/
  * Description:       AI-powered content co-pilot for WordPress.
  * Version:           0.1.0
  * Requires at least: 6.4
@@ -16,14 +16,14 @@
 declare( strict_types=1 );
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
-define( 'WP_AI_MIND_VERSION',      '0.1.0' );
-define( 'WP_AI_MIND_FILE',         __FILE__ );
-define( 'WP_AI_MIND_DIR',          plugin_dir_path( __FILE__ ) );
-define( 'WP_AI_MIND_URL',          plugin_dir_url( __FILE__ ) );
-define( 'WP_AI_MIND_BASENAME',     plugin_basename( __FILE__ ) );
+define( 'WP_AI_MIND_VERSION', '0.1.0' );
+define( 'WP_AI_MIND_FILE', __FILE__ );
+define( 'WP_AI_MIND_DIR', plugin_dir_path( __FILE__ ) );
+define( 'WP_AI_MIND_URL', plugin_dir_url( __FILE__ ) );
+define( 'WP_AI_MIND_BASENAME', plugin_basename( __FILE__ ) );
 define( 'WP_AI_MIND_HTTP_TIMEOUT', 60 ); // seconds — LLM calls can be slow
 
 // Autoloader.

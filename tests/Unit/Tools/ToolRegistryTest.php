@@ -134,8 +134,12 @@ class ToolRegistryTest extends TestCase {
 		$tools    = $registry->get_for_provider( 'claude' );
 
 		$names = array_column( $tools, 'name' );
-		$this->assertContains( 'create_post', $names );
-		$this->assertContains( 'update_post', $names );
+		// create_post and update_post are excluded from AI tool list (used programmatically only).
+		// plan_post and plan_update are their AI-facing replacements.
+		$this->assertNotContains( 'create_post', $names );
+		$this->assertNotContains( 'update_post', $names );
+		$this->assertContains( 'plan_post', $names );
+		$this->assertContains( 'plan_update', $names );
 	}
 
 	// -------------------------------------------------------------------------
