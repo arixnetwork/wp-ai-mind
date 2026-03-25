@@ -17,12 +17,12 @@ final class CompletionRequest {
 	 * @param array  $tools         Tool definitions in provider wire format (empty = no tools).
 	 */
 	public function __construct(
-		public readonly array  $messages,
+		public readonly array $messages,
 		public readonly string $system = '',
 		public readonly string $model = '',
-		public readonly float  $temperature = 0.7,
-		public readonly int    $max_tokens = 2048,
-		public readonly array  $metadata = [],
-		public readonly array  $tools = [],
+		public readonly float $temperature = 0.7,
+		public readonly int $max_tokens = 2048,
+		public readonly array $metadata = [],
+		public readonly array $tools = [],
 	) {}
 }

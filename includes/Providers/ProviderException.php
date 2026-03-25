@@ -18,8 +18,8 @@ class ProviderException extends \RuntimeException {
 	public function __construct(
 		string $message,
 		private readonly string $provider = '',
-		private readonly int    $http_status = 0,
-		private readonly array  $raw_response = [],
+		private readonly int $http_status = 0,
+		private readonly array $raw_response = [],
 		?\Throwable $previous = null,
 	) {
 		parent::__construct( $message, $http_status, $previous );

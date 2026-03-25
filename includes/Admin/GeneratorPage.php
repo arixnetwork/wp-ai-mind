@@ -20,7 +20,10 @@ class GeneratorPage {
 		$asset_file = WP_AI_MIND_DIR . 'assets/generator/index.asset.php';
 		$asset      = file_exists( $asset_file )
 			? require $asset_file
-			: [ 'dependencies' => [], 'version' => WP_AI_MIND_VERSION ];
+			: [
+				'dependencies' => [],
+				'version'      => WP_AI_MIND_VERSION,
+			];
 
 		\wp_enqueue_script(
 			'wp-ai-mind-generator',
@@ -30,13 +33,17 @@ class GeneratorPage {
 			true
 		);
 
-		\wp_localize_script( 'wp-ai-mind-generator', 'wpAiMindData', [
-			'nonce'         => \wp_create_nonce( 'wp_rest' ),
-			'restUrl'       => \esc_url_raw( \rest_url( 'wp-ai-mind/v1' ) ),
-			'currentPostId' => 0,
-			'isPro'         => \wp_ai_mind_is_pro(),
-			'siteTitle'     => \get_bloginfo( 'name' ),
-		] );
+		\wp_localize_script(
+			'wp-ai-mind-generator',
+			'wpAiMindData',
+			[
+				'nonce'         => \wp_create_nonce( 'wp_rest' ),
+				'restUrl'       => \esc_url_raw( \rest_url( 'wp-ai-mind/v1' ) ),
+				'currentPostId' => 0,
+				'isPro'         => \wp_ai_mind_is_pro(),
+				'siteTitle'     => \get_bloginfo( 'name' ),
+			]
+		);
 
 		\wp_enqueue_style(
 			'wp-ai-mind-generator',
