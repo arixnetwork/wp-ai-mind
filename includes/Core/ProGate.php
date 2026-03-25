@@ -8,8 +8,7 @@ namespace WP_AI_Mind\Core {
 	/**
 	 * Free/Pro gate. Single abstraction — swap the backend without touching callers.
 	 *
-	 * Current backend: wp_options flag (stub).
-	 * Future backend:  Freemius SDK call — replace is_pro() body only.
+	 * Backend: Freemius SDK (wam_fs()) when loaded; wp_options flag as fallback.
 	 */
 	class ProGate {
 
@@ -17,9 +16,10 @@ namespace WP_AI_Mind\Core {
 
 		public static function is_pro(): bool {
 			// When Freemius SDK is loaded, delegate to it.
-			if ( function_exists( 'wp_ai_mind_freemius' ) ) {
+			// wam_fs() is the Freemius bootstrap function defined in wp-ai-mind.php.
+			if ( function_exists( 'wam_fs' ) ) {
 				try {
-					return \wp_ai_mind_freemius()->can_use_premium_code__premium_only();
+					return \wam_fs()->can_use_premium_code__premium_only(); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 				} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 					// Freemius not yet initialised — fall through to option check.
 				}
