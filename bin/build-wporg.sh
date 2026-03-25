@@ -34,22 +34,22 @@ mkdir -p "${BUILD_DIR}"
 echo "Running npm build..."
 cd "${PLUGIN_DIR}" && npm run build
 
+# Install production PHP dependencies
+echo "Installing PHP dependencies..."
+cd "${PLUGIN_DIR}" && composer install --no-dev --optimize-autoloader --no-interaction
+
 # Copy plugin files (exclude dev artefacts)
 rsync -a --delete \
     --exclude='.git/' \
     --exclude='node_modules/' \
-    --exclude='vendor/' \
     --exclude='src/' \
     --exclude='bin/' \
     --exclude='tests/' \
     --exclude='dist/' \
     --exclude='.gitignore' \
-    --exclude='*.lock' \
-    --exclude='*.xml' \
-    --exclude='*.json' \
     --exclude='*.config.js' \
     --exclude='phpunit.xml' \
-    --exclude='phpcs.xml' \
+    --exclude='phpcs.xml.dist' \
     --exclude='composer.json' \
     --exclude='composer.lock' \
     --exclude='package.json' \

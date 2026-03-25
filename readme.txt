@@ -2,8 +2,8 @@
 Contributors: njohansson
 Tags: ai, content, seo, chatbot, openai, claude, gemini
 Requires at least: 6.4
-Tested up to: 6.7
-Stable tag: 0.1.0
+Tested up to: 6.8
+Stable tag: 0.2.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -66,6 +66,9 @@ Users with the `edit_posts` capability (Authors, Editors, Administrators) can us
 content generation tools. Site settings require `manage_options` (Administrators only).
 
 == Changelog ==
+
+= 0.2.0 =
+* Repo extraction, CI/CD pipeline, release workflow, and build script fix.
 
 = 0.1.0 =
 * Initial release.
