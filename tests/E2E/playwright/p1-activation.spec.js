@@ -1,19 +1,18 @@
 // tests/E2E/playwright/p1-activation.spec.js
 // P1 smoke tests — verify the plugin activates cleanly on localhost:8080.
 //
-// Credentials: the local Docker admin account is `niklas`.
-// Password is set to `TestPass123!` for local E2E runs only.
+// Credentials: uses the nj_agent E2E test account (seeded by global-setup.js).
 // Run: npx playwright test tests/E2E/playwright/p1-activation.spec.js
 
 const { test, expect } = require( '@playwright/test' );
 
 // ---------------------------------------------------------------------------
-// Shared helper — log in as the local admin.
+// Shared helper — log in as the E2E test admin.
 // ---------------------------------------------------------------------------
 async function loginAsAdmin( page ) {
 	await page.goto( 'http://localhost:8080/wp-login.php' );
-	await page.fill( '#user_login', 'niklas' );
-	await page.fill( '#user_pass', 'TestPass123!' );
+	await page.fill( '#user_login', 'nj_agent' );
+	await page.fill( '#user_pass', 'C8IcqAWJu8F3dOw6E4ndWhIe' );
 	await page.click( '#wp-submit' );
 	// Wait for the dashboard to load.
 	await page.waitForURL( '**/wp-admin/**' );
