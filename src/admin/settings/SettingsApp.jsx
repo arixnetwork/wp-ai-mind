@@ -38,11 +38,12 @@ export default function SettingsApp() {
     }
 
     const handleRunSetup = async () => {
-        await window.fetch( `${ wpAiMindData.restUrl }/onboarding`, {
+        const data = window.wpAiMindData ?? {};
+        await window.fetch( `${ data.restUrl ?? '' }/onboarding`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-WP-Nonce': wpAiMindData.nonce,
+                'X-WP-Nonce': data.nonce ?? '',
             },
             body: JSON.stringify( { seen: false } ),
         } );

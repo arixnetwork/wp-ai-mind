@@ -243,12 +243,7 @@ function Step2( { onBack, onFinish } ) {
                                 </div>
                             </div>
 
-                            <div className="wpaim-ob-devnote">
-                                <strong style={ { display: 'block', marginBottom: 2 } }>Dev note — Gemini image endpoint</strong>
-                                Gemini image generation uses Imagen 3 (<code>imagen-3.0-generate-*</code> models).
-                                Verify whether this can share the <code>generativelanguage.googleapis.com</code> endpoint
-                                used for text, or whether Vertex AI is required before shipping.
-                            </div>
+
                         </div>
                     ) }
                 </div>
