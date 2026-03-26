@@ -11,7 +11,7 @@ test.describe('P2 — Dashboard landing page', () => {
         await page.waitForURL('**/wp-admin/**');
     });
 
-    test('dashboard page renders with title and main sections', async ({ page }) => {
+    test('dashboard page renders with title and Start section', async ({ page }) => {
         await page.goto('/wp-admin/admin.php?page=wp-ai-mind');
         // Wait for React to hydrate
         await page.waitForSelector('.wpaim-dash-title', { timeout: 10000 });
@@ -24,7 +24,7 @@ test.describe('P2 — Dashboard landing page', () => {
     test('Chat sub-menu navigates to Chat page', async ({ page }) => {
         await page.goto('/wp-admin/admin.php?page=wp-ai-mind');
         await page.click('text=Chat');
-        await expect(page).toHaveURL(/page=wp-ai-mind/);
+        await expect(page).toHaveURL(/page=wp-ai-mind-chat/);
         await expect(page.locator('#wp-ai-mind-chat')).toBeVisible();
     });
 
@@ -42,19 +42,21 @@ test.describe('P2 — Dashboard landing page', () => {
         await expect(page.locator('.wpaim-ob-overlay')).toBeVisible();
     });
 
-    test('onboarding modal — Plugin API path', async ({ page }) => {
+    test('onboarding modal — Plugin API path completes in one step', async ({ page }) => {
+        // Reset onboarding seen flag via page evaluation.
         await page.goto('/wp-admin/admin.php?page=wp-ai-mind');
         await page.waitForSelector('.wpaim-dash-title', { timeout: 10000 });
 
-        // Open onboarding modal
-        const runSetupLink = page.locator('.wpaim-dash-footer__link', { hasText: 'Run setup again' });
-        await runSetupLink.click();
+        await page.evaluate(() => {
+            window.wpAiMindDashboard.onboardingSeen = false;
+        });
+        await page.reload();
+        await page.waitForSelector('.wpaim-ob-overlay', { timeout: 10000 });
 
         await expect(page.locator('.wpaim-ob-overlay')).toBeVisible();
 
         // Plugin API is selected by default — click Get started.
-        const getStartedBtn = page.locator('button:has-text("Get started")').first();
-        await getStartedBtn.click();
+        await page.click('button:has-text("Get started")');
 
         // Done screen should appear.
         await expect(page.locator('text=Setup complete')).toBeVisible();
@@ -66,7 +68,7 @@ test.describe('P2 — Dashboard landing page', () => {
 
         const links = page.locator('.wpaim-dash-resource');
         const count = await links.count();
-        expect(count).toBeGreaterThan(0);
+        expect( count ).toBe( 4 );
 
         for (let i = 0; i < count; i++) {
             await expect(links.nth(i)).toHaveAttribute('target', '_blank');
