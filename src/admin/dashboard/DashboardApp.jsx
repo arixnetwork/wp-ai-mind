@@ -1,3 +1,54 @@
+import { useState } from '@wordpress/element';
+import StatusBanner from './StatusBanner';
+import StartTiles from './StartTiles';
+import ResourceList from './ResourceList';
+import PageFooter from './PageFooter';
+import OnboardingModal from './OnboardingModal';
+import './dashboard.css';
+
 export default function DashboardApp() {
-    return <div className="wpaim-dashboard">Loading…</div>;
+    const data = window.wpAiMindDashboard ?? {};
+    const {
+        bannerState    = 'none',
+        onboardingSeen = true,
+        version        = '',
+        nonce          = '',
+        restUrl        = '',
+        runSetupUrl    = '#',
+        urls           = {},
+        resourceUrls   = {},
+    } = data;
+
+    const [ modalVisible, setModalVisible ] = useState( ! onboardingSeen );
+
+    return (
+        <div className="wpaim-dashboard">
+            { /* Top bar */ }
+            <div className="wpaim-dash-topbar">
+                <div>
+                    <div className="wpaim-dash-title">WP AI Mind</div>
+                    <div className="wpaim-dash-subtitle">AI-powered content creation for WordPress</div>
+                </div>
+                <span className="wpaim-dash-version">v{ version }</span>
+            </div>
+
+            <StatusBanner bannerState={ bannerState } urls={ urls } />
+
+            <div className="wpaim-dash-body">
+                <StartTiles urls={ urls } />
+                <ResourceList resourceUrls={ resourceUrls } version={ version } />
+            </div>
+
+            <PageFooter urls={ urls } runSetupUrl={ runSetupUrl } />
+
+            { modalVisible && (
+                <OnboardingModal
+                    onDismiss={ () => setModalVisible( false ) }
+                    nonce={ nonce }
+                    restUrl={ restUrl }
+                    urls={ urls }
+                />
+            ) }
+        </div>
+    );
 }
