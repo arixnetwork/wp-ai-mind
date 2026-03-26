@@ -11,9 +11,11 @@ class DashboardPage {
 		if (
 			isset( $_GET['run_setup'], $_GET['_wpnonce'] ) &&
 			wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'wpaim_run_setup' ) &&
-			current_user_can( 'edit_posts' )
+			current_user_can( 'manage_options' )
 		) {
 			delete_option( 'wp_ai_mind_onboarding_seen' );
+			wp_safe_redirect( admin_url( 'admin.php?page=wp-ai-mind' ) );
+			exit;
 		}
 
 		self::enqueue_assets();
