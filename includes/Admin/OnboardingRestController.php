@@ -16,7 +16,7 @@ class OnboardingRestController {
 			[
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => [ self::class, 'save' ],
-				'permission_callback' => static fn() => current_user_can( 'edit_posts' ),
+				'permission_callback' => [ self::class, 'check_permission' ],
 				'args'                => [
 					'seen'           => [
 						'type'     => 'boolean',
@@ -29,8 +29,9 @@ class OnboardingRestController {
 						'enum'              => [ 'openai', 'claude', 'gemini' ],
 					],
 					'api_key'        => [
-						'type'     => 'string',
-						'required' => false,
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
 					],
 					'image_provider' => [
 						'type'              => 'string',
@@ -56,9 +57,10 @@ class OnboardingRestController {
 		if ( $provider ) {
 			update_option( 'wp_ai_mind_default_provider', $provider );
 
+			// API key is only stored when a provider is also specified — they are set together.
 			$api_key = $request->get_param( 'api_key' );
 			if ( $api_key ) {
-				$provider_settings = new ProviderSettings();
+				$provider_settings = static::make_provider_settings();
 				$provider_settings->set_api_key( $provider, $api_key );
 			}
 		}
@@ -69,5 +71,30 @@ class OnboardingRestController {
 		}
 
 		return new WP_REST_Response( [ 'success' => true ], 200 );
+	}
+
+	/**
+	 * Checks that the current user has the `manage_options` capability.
+	 *
+	 * @return bool|\WP_Error
+	 */
+	public static function check_permission(): bool|\WP_Error {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to manage plugin settings.', 'wp-ai-mind' ),
+				[ 'status' => 403 ]
+			);
+		}
+		return true;
+	}
+
+	/**
+	 * Factory method for ProviderSettings — overridable in tests.
+	 *
+	 * @return ProviderSettings
+	 */
+	protected static function make_provider_settings(): ProviderSettings {
+		return new ProviderSettings();
 	}
 }
