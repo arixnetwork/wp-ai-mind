@@ -40,6 +40,8 @@ class OpenAIProvider extends AbstractProvider {
 		return 'openai'; }
 	public function get_models(): array {
 		return self::MODELS; }
+	public function get_default_model(): string {
+		return self::DEFAULT_MODEL; }
 	public function is_available(): bool {
 		return '' !== $this->api_key; }
 

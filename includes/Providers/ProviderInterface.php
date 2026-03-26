@@ -55,6 +55,13 @@ interface ProviderInterface {
 	public function get_models(): array;
 
 	/**
+	 * Returns the default model ID for this provider.
+	 *
+	 * @return string
+	 */
+	public function get_default_model(): string;
+
+	/**
 	 * Returns true if the provider is configured (API key present / reachable).
 	 *
 	 * @return bool

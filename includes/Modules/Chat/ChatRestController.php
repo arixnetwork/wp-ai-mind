@@ -74,9 +74,13 @@ class ChatRestController {
 							'type'    => 'string',
 							'default' => '',
 						],
-						'model'    => [
+						'model'           => [
 							'type'    => 'string',
 							'default' => '',
+						],
+						'context_post_id' => [
+							'type'    => 'integer',
+							'default' => 0,
 						],
 					],
 				],
@@ -100,6 +104,23 @@ class ChatRestController {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'list_providers' ],
 				'permission_callback' => [ $this, 'check_permission' ],
+			]
+		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/search-posts',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'search_posts' ],
+				'permission_callback' => [ $this, 'check_permission' ],
+				'args'                => [
+					'q' => [
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
 			]
 		);
 	}
@@ -152,6 +173,16 @@ class ChatRestController {
 
 		$injector = $this->make_voice_injector();
 		$system   = $injector->build_system_prompt( '', \get_current_user_id() );
+
+		$context_post_id = absint( $request->get_param( 'context_post_id' ) );
+		if ( $context_post_id > 0 ) {
+			$context_post = get_post( $context_post_id );
+			if ( $context_post instanceof \WP_Post && \current_user_can( 'read_post', $context_post_id ) ) {
+				$system .= "\n\nCurrent context: You are working on a WordPress post titled '"
+					. esc_attr( $context_post->post_title )
+					. "' (ID: {$context_post_id}). Use the get_post_content tool with ID {$context_post_id} to read its full content when needed.";
+			}
+		}
 
 		try {
 			$factory  = $this->make_provider_factory();
@@ -265,13 +296,47 @@ class ChatRestController {
 	}
 
 	public function list_providers( \WP_REST_Request $request ): \WP_REST_Response {
-		$factory   = $this->make_provider_factory();
-		$available = $factory->get_available();
-		$data      = [];
-		foreach ( $available as $provider ) {
+		$factory  = $this->make_provider_factory();
+		$all      = $factory->get_all();
+		$data     = [];
+		foreach ( $all as $provider ) {
 			$data[] = [
-				'slug'   => $provider->get_slug(),
-				'models' => $provider->get_models(),
+				'slug'         => $provider->get_slug(),
+				'models'       => $provider->get_models(),
+				'is_available' => $provider->is_available(),
+			];
+		}
+		return rest_ensure_response( $data );
+	}
+
+	public function search_posts( \WP_REST_Request $request ): \WP_REST_Response {
+		$q          = trim( (string) $request->get_param( 'q' ) );
+		$post_types = array_values(
+			array_filter(
+				get_post_types( [ 'public' => true ], 'names' ),
+				fn( $pt ) => 'attachment' !== $pt
+			)
+		);
+		$post_types[] = 'attachment';
+
+		$query = new \WP_Query(
+			[
+				'post_type'      => $post_types,
+				'post_status'    => 'publish',
+				's'              => $q,
+				'posts_per_page' => 10,
+				'orderby'        => 'relevance',
+			]
+		);
+		$data = [];
+		foreach ( $query->posts as $post ) {
+			$type_obj   = get_post_type_object( $post->post_type );
+			$type_label = $type_obj ? $type_obj->labels->singular_name : $post->post_type;
+			$data[]     = [
+				'id'         => $post->ID,
+				'title'      => get_the_title( $post ),
+				'type'       => $post->post_type,
+				'type_label' => $type_label,
 			];
 		}
 		return rest_ensure_response( $data );

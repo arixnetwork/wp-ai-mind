@@ -16,6 +16,8 @@ class OllamaProvider extends AbstractProvider {
 		return 'ollama'; }
 	public function get_models(): array {
 		return [ $this->default_model => $this->default_model ]; }
+	public function get_default_model(): string {
+		return $this->default_model; }
 	public function is_available(): bool {
 		return '' !== $this->base_url; }
 

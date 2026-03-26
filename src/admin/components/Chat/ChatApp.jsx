@@ -17,6 +17,7 @@ export default function ChatApp() {
     const [ selectedProvider, setSelectedProvider ] = useState( '' );
     const [ selectedModel,    setSelectedModel    ] = useState( '' );
     const [ providers,        setProviders        ] = useState( [] );
+    const [ attachedPost,     setAttachedPost     ] = useState( null );
     const skipLoadRef = useRef( false );
 
     useEffect( () => {
@@ -91,7 +92,7 @@ export default function ChatApp() {
             const res = await apiFetch( {
                 path:   `/wp-ai-mind/v1/conversations/${convId}/messages`,
                 method: 'POST',
-                data:   { content, provider: selectedProvider, model: selectedModel },
+                data:   { content, provider: selectedProvider, model: selectedModel, context_post_id: attachedPost?.id ?? 0 },
             } );
             setMessages( prev => [ ...prev, { role: 'assistant', content: res.content, model: res.model, tokens: res.tokens } ] );
         } finally {
@@ -124,7 +125,13 @@ export default function ChatApp() {
                     ? <EmptyState />
                     : <MessageList messages={ messages } isLoading={ isLoading } />
                 }
-                <Composer onSend={ sendMessage } isLoading={ isLoading } />
+                <Composer
+                    onSend={ sendMessage }
+                    isLoading={ isLoading }
+                    attachedPost={ attachedPost }
+                    onAttach={ setAttachedPost }
+                    onDetach={ () => setAttachedPost( null ) }
+                />
             </main>
 
             <aside className="wpaim-right-panel">

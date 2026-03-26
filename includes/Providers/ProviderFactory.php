@@ -43,4 +43,9 @@ class ProviderFactory {
 			)
 		);
 	}
+
+	/** Returns all providers unconditionally (regardless of API key). */
+	public function get_all(): array {
+		return array_map( fn( $s ) => $this->make( $s ), [ 'claude', 'openai', 'gemini', 'ollama' ] );
+	}
 }

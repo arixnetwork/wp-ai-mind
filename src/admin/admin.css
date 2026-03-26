@@ -108,11 +108,17 @@
 /* ── Composer ── */
 .wpaim-composer {
     display: flex;
-    align-items: flex-end;
-    gap: var(--space-2);
+    flex-direction: column;
+    gap: 0;
     padding: var(--space-4) var(--space-6);
     border-top: 1px solid var(--color-border-subtle);
     background: var(--color-surface);
+    position: relative;
+}
+.wpaim-composer__row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
 }
 .wpaim-composer__input {
     flex: 1;
@@ -130,6 +136,143 @@
 }
 .wpaim-composer__input:focus { outline: none; border-color: var(--color-accent); }
 .wpaim-composer__input::placeholder { color: var(--color-text-muted); }
+.wpaim-composer__attachment {
+    padding-bottom: var(--space-2);
+}
+.wpaim-composer__attachment-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    background: var(--color-accent-subtle);
+    border: 1px solid var(--color-accent-border);
+    border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.wpaim-composer__attachment-dismiss {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: var(--color-text-muted);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+.wpaim-composer__attachment-dismiss:hover { color: var(--color-text-primary); }
+
+/* ── Context picker ── */
+.wpaim-context-picker {
+    position: absolute;
+    bottom: calc(100% + var(--space-2));
+    left: var(--space-6);
+    right: var(--space-6);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    z-index: 100;
+    overflow: hidden;
+}
+.wpaim-context-picker__search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+.wpaim-context-picker__icon { color: var(--color-text-muted); flex-shrink: 0; }
+.wpaim-context-picker__input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--color-text-primary);
+    font-size: var(--text-base);
+    font-family: var(--font-sans);
+}
+.wpaim-context-picker__input::placeholder { color: var(--color-text-muted); }
+.wpaim-context-picker__status {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+.wpaim-context-picker__list {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-1) 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.wpaim-context-picker__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    cursor: pointer;
+    gap: var(--space-2);
+    color: var(--color-text-primary);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+}
+.wpaim-context-picker__item:hover { background: var(--color-surface); }
+.wpaim-context-picker__title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.wpaim-context-picker__badge {
+    flex-shrink: 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 1px var(--space-1);
+}
+
+/* ── Model selector simple/advanced ── */
+.wpaim-model-simple {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+.wpaim-model-default-label {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.wpaim-model-advanced-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    padding: 0;
+    font-family: var(--font-sans);
+}
+.wpaim-model-advanced-toggle:hover { color: var(--color-text-secondary); }
+.wpaim-model-no-key {
+    font-size: var(--text-xs);
+    color: var(--color-warning);
+    margin: var(--space-1) 0 0;
+}
+.wpaim-model-no-key a { color: var(--color-warning); }
 
 /* ── Right panel ── */
 .wpaim-right-panel {
