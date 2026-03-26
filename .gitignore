@@ -7,3 +7,4 @@ freemius/
 composer.phar
 test-results/
 .phpunit.result.cache
+.agents/
