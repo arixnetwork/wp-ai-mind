@@ -5,7 +5,7 @@ export default function MessageBubble({ message }) {
     const isAI = message.role === 'assistant';
 
     return (
-        <div className={ `wpaim-bubble wpaim-bubble--${ isAI ? 'ai' : 'user' }` }>
+        <div className={ `wpaim-bubble wpaim-bubble--${ isAI ? 'ai' : 'user' }${ message.isError ? ' wpaim-bubble--error' : '' }` }>
             <div className="wpaim-bubble__content">
                 { isAI
                     ? <MarkdownContent content={ message.content } className="wpaim-bubble__markdown" />

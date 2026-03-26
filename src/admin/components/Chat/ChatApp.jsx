@@ -95,6 +95,9 @@ export default function ChatApp() {
                 data:   { content, provider: selectedProvider, model: selectedModel, context_post_id: attachedPost?.id ?? 0 },
             } );
             setMessages( prev => [ ...prev, { role: 'assistant', content: res.content, model: res.model, tokens: res.tokens } ] );
+        } catch ( err ) {
+            const errorText = err?.message ?? 'Something went wrong. Please try again.';
+            setMessages( prev => [ ...prev, { role: 'assistant', content: errorText, isError: true } ] );
         } finally {
             setIsLoading( false );
         }

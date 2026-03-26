@@ -188,6 +188,17 @@ class ChatRestController {
 			$factory  = $this->make_provider_factory();
 			$provider = $factory->make( $provider_slug );
 
+			if ( ! $provider->is_available() ) {
+				return new \WP_REST_Response(
+					[ 'message' => sprintf(
+						/* translators: %s: provider slug */
+						__( 'No API key configured for "%s". Please add one in WP AI Mind → Settings.', 'wp-ai-mind' ),
+						$provider_slug
+					) ],
+					422
+				);
+			}
+
 			$tools = $provider->supports_tools()
 				? $this->tool_registry->get_for_provider( $provider_slug )
 				: [];
@@ -274,7 +285,14 @@ class ChatRestController {
 				]
 			);
 		} catch ( ProviderException $e ) {
-			$status = $e->get_http_status() >= 400 && $e->get_http_status() < 600 ? $e->get_http_status() : 502;
+			$provider_status = $e->get_http_status();
+			// Never forward a provider 401/403 as-is — it would look like a WP auth failure to the client.
+			// Map those (and anything outside 4xx/5xx) to 502.
+			if ( in_array( $provider_status, [ 401, 403 ], true ) || $provider_status < 400 || $provider_status >= 600 ) {
+				$status = 502;
+			} else {
+				$status = $provider_status;
+			}
 			return new \WP_REST_Response( [ 'message' => $e->getMessage() ], $status );
 		}
 	}
