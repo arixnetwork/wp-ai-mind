@@ -37,6 +37,18 @@ export default function SettingsApp() {
         }
     }
 
+    const handleRunSetup = async () => {
+        await window.fetch( `${ wpAiMindData.restUrl }/onboarding`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': wpAiMindData.nonce,
+            },
+            body: JSON.stringify( { seen: false } ),
+        } );
+        window.location.href = 'admin.php?page=wp-ai-mind';
+    };
+
     const tabProps = { settings, saveSettings, isSaving };
 
     return (
@@ -84,6 +96,20 @@ export default function SettingsApp() {
                         { activeTab === 'features'  && <FeaturesTab  { ...tabProps } /> }
                     </>
                 ) }
+            </div>
+
+            <div className="wpaim-settings-section" style={ { borderTop: '1px solid var(--color-border-subtle)', paddingTop: 'var(--space-4)', marginTop: 'var(--space-4)' } }>
+                <div className="wpaim-settings-label">Setup</div>
+                <p className="wpaim-settings-description">
+                    Re-run the onboarding wizard to change your API connection or provider settings.
+                </p>
+                <button
+                    type="button"
+                    className="wpaim-btn wpaim-btn--secondary"
+                    onClick={ handleRunSetup }
+                >
+                    Run setup again
+                </button>
             </div>
         </div>
     );
