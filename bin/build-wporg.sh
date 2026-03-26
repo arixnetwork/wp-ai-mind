@@ -38,22 +38,17 @@ cd "${PLUGIN_DIR}" && npm run build
 echo "Installing PHP dependencies..."
 cd "${PLUGIN_DIR}" && composer install --no-dev --optimize-autoloader --no-interaction
 
-# Copy plugin files (exclude dev artefacts)
-rsync -a --delete \
-    --exclude='.git/' \
-    --exclude='node_modules/' \
-    --exclude='src/' \
-    --exclude='bin/' \
-    --exclude='tests/' \
-    --exclude='dist/' \
-    --exclude='.gitignore' \
-    --exclude='*.config.js' \
-    --exclude='phpunit.xml' \
-    --exclude='phpcs.xml.dist' \
-    --exclude='composer.json' \
-    --exclude='composer.lock' \
-    --exclude='package.json' \
-    --exclude='package-lock.json' \
+# Copy only production files (allowlist — safe by default, new dev tooling never leaks in)
+rsync -a \
+    --include='includes/***' \
+    --include='languages/***' \
+    --include='vendor/***' \
+    --include='assets/***' \
+    --include='wp-ai-mind.php' \
+    --include='readme.txt' \
+    --include='uninstall.php' \
+    --include='CHANGELOG.md' \
+    --exclude='*' \
     "${PLUGIN_DIR}/" "${BUILD_DIR}/"
 
 # Create zip
