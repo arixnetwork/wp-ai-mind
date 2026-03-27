@@ -44,7 +44,7 @@ export default function ContextPicker( { onSelect, onClose } ) {
 	}
 
 	return (
-		<div className="wpaim-context-picker" role="search">
+		<div className="wpaim-context-picker" role="search" aria-label="Search post context">
 			<div className="wpaim-context-picker__search">
 				<Search
 					size={ 12 }
@@ -61,13 +61,13 @@ export default function ContextPicker( { onSelect, onClose } ) {
 				/>
 			</div>
 			{ loading && (
-				<div className="wpaim-context-picker__status">Searching…</div>
+				<div className="wpaim-context-picker__status" aria-live="polite">Searching…</div>
 			) }
 			{ ! loading && results.length === 0 && query.length >= 2 && (
-				<div className="wpaim-context-picker__status">No results</div>
+				<div className="wpaim-context-picker__status" aria-live="polite">No results</div>
 			) }
 			{ results.length > 0 && (
-				<ul className="wpaim-context-picker__list">
+				<ul className="wpaim-context-picker__list" aria-live="polite">
 					{ results.map( ( post ) => (
 						<li key={ post.id }>
 							<button
