@@ -10,12 +10,15 @@ class AdminMenu {
 			__( 'AI Mind', 'wp-ai-mind' ),
 			'edit_posts',
 			'wp-ai-mind',
-			[ ChatPage::class, 'render' ],
+			[ DashboardPage::class, 'render' ],
 			self::get_menu_icon(),
 			30
 		);
 
-		add_submenu_page( 'wp-ai-mind', __( 'Chat', 'wp-ai-mind' ), __( 'Chat', 'wp-ai-mind' ), 'edit_posts', 'wp-ai-mind', [ ChatPage::class, 'render' ] );
+		// First submenu entry must share parent slug — WordPress uses it to rename
+		// the parent item in the submenu list. Label it "Dashboard".
+		add_submenu_page( 'wp-ai-mind', __( 'Dashboard', 'wp-ai-mind' ), __( 'Dashboard', 'wp-ai-mind' ), 'edit_posts', 'wp-ai-mind', [ DashboardPage::class, 'render' ] );
+		add_submenu_page( 'wp-ai-mind', __( 'Chat', 'wp-ai-mind' ), __( 'Chat', 'wp-ai-mind' ), 'edit_posts', 'wp-ai-mind-chat', [ ChatPage::class, 'render' ] );
 		add_submenu_page( 'wp-ai-mind', __( 'Generator', 'wp-ai-mind' ), __( 'Generator', 'wp-ai-mind' ), 'edit_posts', 'wp-ai-mind-generator', [ GeneratorPage::class, 'render' ] );
 		add_submenu_page( 'wp-ai-mind', __( 'SEO', 'wp-ai-mind' ), __( 'SEO', 'wp-ai-mind' ), 'edit_posts', 'wp-ai-mind-seo', '__return_false' );
 		add_submenu_page( 'wp-ai-mind', __( 'Images', 'wp-ai-mind' ), __( 'Images', 'wp-ai-mind' ), 'edit_posts', 'wp-ai-mind-images', '__return_false' );

@@ -5,6 +5,18 @@
 
 ---
 
+## Local Setup (fresh clone)
+
+```bash
+npm install   # installs dependencies AND the pre-commit hook via the prepare script
+composer install
+```
+
+The pre-commit hook (`scripts/pre-commit`) automatically runs `npm run build` and stages
+the compiled `assets/` whenever `src/` files are committed. No manual build step needed.
+
+---
+
 ## Git & GitHub Workflow
 
 ### Branch Protection — Never Commit to `main`

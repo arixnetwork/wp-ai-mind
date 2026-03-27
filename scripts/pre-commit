@@ -1,0 +1,9 @@
+#!/bin/sh
+# Auto-build JS/CSS assets when src/ files are staged.
+# Adds the compiled assets/ back into the commit automatically.
+
+if git diff --cached --name-only | grep -q '^src/'; then
+  echo "src/ changes detected — running npm run build..."
+  npm run build || { echo "npm run build failed. Commit aborted."; exit 1; }
+  git add assets/
+fi
