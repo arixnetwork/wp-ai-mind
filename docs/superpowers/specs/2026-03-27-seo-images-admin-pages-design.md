@@ -52,12 +52,20 @@ Both pages check `window.wpAiMindData.isPro`. Non-Pro users see a lock screen �
 
 ### Design tokens
 
-Inherits `src/styles/tokens.css`. Key values in use:
-- `--color-bg: #09090b` — page background
-- `--color-surface: #18181b` — cards, work area
-- `--color-border: #3f3f46`
-- `--color-text-muted: #71717a`
-- Accent: `#3b82f6`
+Inherits `src/styles/tokens.css`. The plugin now uses the WP admin light palette — the dark zinc values have been removed. Key values in use:
+
+| Token | Value | Use |
+|---|---|---|
+| `--color-bg` | `#fff` | Page background |
+| `--color-surface` | `#f8f9fa` | Cards, work area |
+| `--color-surface-2` | `#f0f0f1` | Inputs, hover backgrounds |
+| `--color-border` | `#dcdcde` | Default borders |
+| `--color-text-primary` | `#1d2327` | Body text |
+| `--color-text-secondary` | `#50575e` | Labels, secondary text |
+| `--color-text-muted` | `#787c82` | Placeholders, muted text |
+| `--wp-admin-theme-color` | (WP native) | Accent — buttons, focus rings, highlights |
+
+Use `var(--wp-admin-theme-color)` for all interactive accent elements (primary buttons, selected states, focus borders). Do not hardcode `#3b82f6`.
 
 ### Folder structure
 
