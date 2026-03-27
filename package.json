@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "prepare": "cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
+    "prepare": "GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) && mkdir -p \"$GIT_DIR/hooks\" && cp scripts/pre-commit \"$GIT_DIR/hooks/pre-commit\" && chmod +x \"$GIT_DIR/hooks/pre-commit\"",
     "build": "wp-scripts build",
     "start": "wp-scripts start",
     "lint:js": "wp-scripts lint-js",
