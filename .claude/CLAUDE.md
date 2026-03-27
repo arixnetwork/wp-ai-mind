@@ -56,6 +56,24 @@ Examples:
 
 ---
 
+## Agent Artifacts & Handoff Documents
+
+All transient files created by agents MUST go in `.artifacts/` — this directory is gitignored and never committed.
+
+| Sub-directory | Use |
+|---|---|
+| `.artifacts/reports/` | Handoff documents, review reports, JSON exports |
+| `.artifacts/screenshots/` | Playwright screenshots, visual comparisons |
+
+**Never write handoff docs, plans, or reports to the repository root or any tracked directory.**
+
+Create the directories if missing:
+```bash
+mkdir -p .artifacts/reports .artifacts/screenshots
+```
+
+---
+
 ## Release Process
 
 See `RELEASING.md` for the full release checklist.
