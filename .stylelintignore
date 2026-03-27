@@ -1,0 +1,10 @@
+# Build output
+build
+assets
+
+# Dependencies
+node_modules
+vendor
+
+# Agent tooling
+.agents
