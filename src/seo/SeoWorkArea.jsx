@@ -89,10 +89,9 @@ export default function SeoWorkArea( { post, onClose, onUpdate } ) {
 	return (
 		<div className="wpaim-work-area">
 			<div className="wpaim-work-header">
-				<span
-					className="wpaim-work-title"
-					dangerouslySetInnerHTML={ { __html: post.title.rendered } }
-				/>
+				<span className="wpaim-work-title">
+					{ post.title.rendered.replace( /<[^>]+>/g, '' ) }
+				</span>
 				<button
 					className="button button-primary"
 					onClick={ handleGenerate }

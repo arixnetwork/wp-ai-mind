@@ -104,10 +104,9 @@ export default function ImagesWorkArea( { post, onClose, onUpdate } ) {
 	return (
 		<div className="wpaim-work-area">
 			<div className="wpaim-work-header">
-				<span
-					className="wpaim-work-title"
-					dangerouslySetInnerHTML={ { __html: post.title.rendered } }
-				/>
+				<span className="wpaim-work-title">
+					{ post.title.rendered.replace( /<[^>]+>/g, '' ) }
+				</span>
 			</div>
 
 			<div className="wpaim-images-prompt-row">

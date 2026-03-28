@@ -84,9 +84,13 @@ class TestKeyRestController {
 				break;
 
 			case 'gemini':
+				// Key sent as a header to avoid exposure in server access logs and browser history.
 				$result = wp_remote_get(
-					'https://generativelanguage.googleapis.com/v1beta/models?key=' . rawurlencode( $api_key ),
-					[ 'timeout' => 10 ]
+					'https://generativelanguage.googleapis.com/v1beta/models',
+					[
+						'headers' => [ 'x-goog-api-key' => $api_key ],
+						'timeout' => 10,
+					]
 				);
 				break;
 

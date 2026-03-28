@@ -192,9 +192,7 @@ function PostRow( {
 	return (
 		<>
 			<tr className={ expanded ? 'is-expanded' : '' }>
-				<td
-					dangerouslySetInnerHTML={ { __html: post.title.rendered } }
-				/>
+				<td>{ post.title.rendered.replace( /<[^>]+>/g, '' ) }</td>
 				<td>
 					<span className="wpaim-type-badge">{ post.type }</span>
 				</td>
