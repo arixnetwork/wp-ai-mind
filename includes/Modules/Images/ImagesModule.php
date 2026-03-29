@@ -13,7 +13,7 @@ class ImagesModule {
 		\add_action( 'rest_api_init', [ self::class, 'register_routes' ] );
 	}
 
-	public static function enqueue_assets( string $hook ): void {
+	public static function enqueue_assets( string $hook ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by admin_enqueue_scripts hook signature.
 		// Only load on the images admin page.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page detection, never output.
 		if ( sanitize_key( \wp_unslash( $_GET['page'] ?? '' ) ) !== 'wp-ai-mind-images' ) {
@@ -40,9 +40,10 @@ class ImagesModule {
 			'wp-ai-mind-images',
 			'wpAiMindData',
 			[
-				'nonce'   => \wp_create_nonce( 'wp_rest' ),
-				'restUrl' => \esc_url_raw( \rest_url( 'wp-ai-mind/v1' ) ),
-				'isPro'   => \wp_ai_mind_is_pro(),
+				'nonce'    => \wp_create_nonce( 'wp_rest' ),
+				'restUrl'  => \esc_url_raw( \rest_url( 'wp-ai-mind/v1' ) ),
+				'isPro'    => \wp_ai_mind_is_pro(),
+				'adminUrl' => \esc_url_raw( \admin_url() ),
 			]
 		);
 

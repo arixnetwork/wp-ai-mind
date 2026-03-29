@@ -125,7 +125,7 @@ class ChatRestController {
 		);
 	}
 
-	public function list_conversations( \WP_REST_Request $request ): \WP_REST_Response {
+	public function list_conversations( \WP_REST_Request $request ): \WP_REST_Response { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WP_REST_Server callback signature.
 		$store = $this->make_store();
 		return rest_ensure_response( $store->list_for_user( get_current_user_id() ) );
 	}
@@ -315,7 +315,7 @@ class ChatRestController {
 		return rest_ensure_response( [ 'deleted' => true ] );
 	}
 
-	public function list_providers( \WP_REST_Request $request ): \WP_REST_Response {
+	public function list_providers( \WP_REST_Request $request ): \WP_REST_Response { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by WP_REST_Server callback signature.
 		$factory = $this->make_provider_factory();
 		$all     = $factory->get_all();
 		$data    = [];
