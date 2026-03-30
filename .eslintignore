@@ -1,16 +1,5 @@
-# Build output
-build
-assets
-
-# Dependencies
-node_modules
-vendor
-
-# Agent tooling (not project source)
-.agents
-
-# E2E tests (separate lint scope)
-tests/E2E
-
-# Playwright config
+assets/
+node_modules/
+vendor/
+tests/
 playwright.config.js

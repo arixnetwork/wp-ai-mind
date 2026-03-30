@@ -17,7 +17,7 @@ class SeoModule {
 		\add_action( 'rest_api_init', [ self::class, 'register_seo_status_field' ] );
 	}
 
-	public static function enqueue_assets( string $hook ): void {
+	public static function enqueue_assets( string $hook ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by admin_enqueue_scripts hook signature.
 		// Only load on the SEO admin page.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page detection, never output.
 		if ( sanitize_key( \wp_unslash( $_GET['page'] ?? '' ) ) !== 'wp-ai-mind-seo' ) {
@@ -253,7 +253,8 @@ class SeoModule {
 	}
 
 	public static function register_seo_status_field(): void {
-		foreach ( [ 'post', 'page' ] as $post_type ) {
+		$post_types = (array) \apply_filters( 'wp_ai_mind_seo_post_types', [ 'post', 'page' ] );
+		foreach ( $post_types as $post_type ) {
 			\register_rest_field(
 				$post_type,
 				'wpaim_seo_status',
@@ -262,7 +263,7 @@ class SeoModule {
 					'update_callback' => null,
 					'schema'          => [
 						'type'       => 'object',
-						'context'    => [ 'view' ],
+						'context'    => [ 'edit' ],
 						'properties' => [
 							'meta_title'     => [
 								'type' => 'string',
