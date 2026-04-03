@@ -16,7 +16,7 @@
     "marked": "^17.0.4"
   },
   "devDependencies": {
-    "@wordpress/scripts": "^30.0.0"
+    "@wordpress/scripts": "^31.8.0"
   },
   "wp-scripts-config": {
     "webpack": "./webpack.config.js"
