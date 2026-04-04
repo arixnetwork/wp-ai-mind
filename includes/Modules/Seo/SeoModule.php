@@ -297,11 +297,7 @@ class SeoModule {
 		$yoast_desc     = \get_post_meta( $post_id, '_yoast_wpseo_metadesc', true );
 		$og_description = $yoast_desc ? $yoast_desc : \get_post_meta( $post_id, 'rank_math_description', true );
 
-		$post = \get_post( $post_id );
-		if ( ! $post instanceof \WP_Post ) {
-			return [];
-		}
-		$excerpt = $post->post_excerpt;
+		$excerpt = $post_data['excerpt']['raw'] ?? '';
 
 		$thumb_id = \get_post_thumbnail_id( $post_id );
 		$alt_text = $thumb_id
