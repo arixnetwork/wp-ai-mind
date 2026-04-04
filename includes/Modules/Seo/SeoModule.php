@@ -168,9 +168,11 @@ class SeoModule {
 			$provider = $factory->make_default();
 			$response = $provider->complete( $req );
 		} catch ( ProviderException $e ) {
-			return new \WP_REST_Response( [ 'error' => $e->getMessage() ], 502 );
+			\error_log( 'WP AI Mind SeoModule provider error: ' . $e->getMessage() );
+			return new \WP_REST_Response( [ 'error' => __( 'Provider error. Please try again later.', 'wp-ai-mind' ) ], 502 );
 		} catch ( \Exception $e ) {
-			return new \WP_REST_Response( [ 'error' => $e->getMessage() ], 500 );
+			\error_log( 'WP AI Mind SeoModule unexpected error: ' . $e->getMessage() );
+			return new \WP_REST_Response( [ 'error' => __( 'An unexpected error occurred. Please try again later.', 'wp-ai-mind' ) ], 500 );
 		}
 
 		$raw  = trim( $response->content );
