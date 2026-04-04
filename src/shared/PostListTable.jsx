@@ -20,6 +20,12 @@ export default function PostListTable( { tabs, WorkArea, columns = [] } ) {
 				const fetchEndpoint = async ( path ) => {
 					const response = await apiFetch( { path, parse: false } );
 					const data = await response.json();
+					if ( ! response.ok ) {
+						throw new Error(
+							data?.message ??
+								`Request failed with status ${ response.status }`
+						);
+					}
 					const total = parseInt(
 						response.headers.get( 'X-WP-Total' ) ?? '0',
 						10
