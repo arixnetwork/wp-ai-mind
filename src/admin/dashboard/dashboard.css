@@ -4,8 +4,8 @@
 	display: flex;
 	flex-direction: column;
 	min-height: 100vh;
-	background: #fff;
-	color: #1d2327;
+	background: var(--color-bg);
+	color: var(--color-text-primary);
 	font-family: var(--font-sans, -apple-system, sans-serif);
 	-webkit-font-smoothing: antialiased;
 }
@@ -16,7 +16,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--space-4) var(--space-6) var(--space-3);
-	border-bottom: 1px solid #e0e1e6;
+	border-bottom: 1px solid var(--color-border-subtle);
 	flex-shrink: 0;
 }
 
@@ -38,9 +38,9 @@
 	font-size: 0.625rem;
 	padding: 3px 8px;
 	border-radius: var(--radius-sm);
-	background: #f8f9fa;
-	border: 1px solid #dcdcde;
-	color: #787c82;
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	color: var(--color-text-muted);
 }
 
 /* ── Status banner ──────────────────────────────────────────────────────────── */
@@ -133,8 +133,8 @@
 }
 
 .wpaim-dash-tile {
-	background: #f8f9fa;
-	border: 1px solid #e0e1e6;
+	background: var(--color-surface);
+	border: 1px solid var(--color-border-subtle);
 	border-radius: var(--radius);
 	padding: var(--space-4) var(--space-4) var(--space-7);
 	cursor: pointer;
@@ -156,8 +156,8 @@
 }
 
 .wpaim-dash-tile:hover {
-	border-color: #dcdcde;
-	background: #f0f0f1;
+	border-color: var(--color-border);
+	background: var(--color-surface-2);
 	transform: translateY(-1px);
 	text-decoration: none;
 }
@@ -204,8 +204,8 @@
 /* ── Resource list ──────────────────────────────────────────────────────────── */
 
 .wpaim-dash-resources {
-	background: #f8f9fa;
-	border: 1px solid #e0e1e6;
+	background: var(--color-surface);
+	border: 1px solid var(--color-border-subtle);
 	border-radius: var(--radius);
 	overflow: hidden;
 }
@@ -214,7 +214,7 @@
 	display: flex;
 	align-items: center;
 	padding: var(--space-3) var(--space-3);
-	border-bottom: 1px solid #e0e1e6;
+	border-bottom: 1px solid var(--color-border-subtle);
 	text-decoration: none;
 	transition: background 0.1s;
 	gap: var(--space-3);
@@ -225,7 +225,7 @@
 }
 
 .wpaim-dash-resource:hover {
-	background: #f0f0f1;
+	background: var(--color-surface-2);
 	text-decoration: none;
 }
 
@@ -265,7 +265,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--space-3);
-	border-top: 1px solid #e0e1e6;
+	border-top: 1px solid var(--color-border-subtle);
 }
 
 .wpaim-dash-footer__link {
@@ -301,9 +301,9 @@
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	font-family: inherit;
-	border: 1px solid #dcdcde;
-	background: #f8f9fa;
-	color: #50575e;
+	border: 1px solid var(--color-border);
+	background: var(--color-surface);
+	color: var(--color-text-secondary);
 	text-decoration: none;
 	white-space: nowrap;
 	transition: border-color 0.12s, color 0.12s;
@@ -346,9 +346,9 @@
 .wpaim-ob-test-btn {
 	font-size: 0.6875rem;
 	padding: var(--space-2) var(--space-3);
-	background: #f0f0f1;
-	color: #50575e;
-	border: 1px solid #e0e1e6;
+	background: var(--color-surface-2);
+	color: var(--color-text-secondary);
+	border: 1px solid var(--color-border-subtle);
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	white-space: nowrap;
@@ -382,7 +382,7 @@
 
 .wpaim-ob-header {
 	padding: var(--space-4) var(--space-5) var(--space-3);
-	border-bottom: 1px solid #e0e1e6;
+	border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .wpaim-ob-pips {
@@ -395,7 +395,7 @@
 	height: 2px;
 	flex: 1;
 	border-radius: 2px;
-	background: #e0e1e6;
+	background: var(--color-border-subtle);
 	transition: background 0.2s;
 }
 
@@ -429,7 +429,7 @@
 
 .wpaim-ob-footer {
 	padding: var(--space-2) var(--space-5) var(--space-3);
-	border-top: 1px solid #e0e1e6;
+	border-top: 1px solid var(--color-border-subtle);
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -437,20 +437,20 @@
 
 /* Choice radio cards */
 .wpaim-ob-choice {
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius);
 	padding: var(--space-2) var(--space-3);
 	display: flex;
 	align-items: flex-start;
 	gap: var(--space-2);
-	background: #fff;
+	background: var(--color-bg);
 	cursor: pointer;
 	transition: border-color 0.12s, background 0.12s;
 }
 
 .wpaim-ob-choice:hover {
 	border-color: #8c8f94;
-	background: #f0f0f1;
+	background: var(--color-surface-2);
 }
 
 .wpaim-ob-choice--selected {
@@ -462,7 +462,7 @@
 	width: 15px;
 	height: 15px;
 	border-radius: 50%;
-	border: 1.5px solid #dcdcde;
+	border: 1.5px solid var(--color-border);
 	margin-top: 1px;
 	flex-shrink: 0;
 	display: flex;
@@ -481,7 +481,7 @@
 	width: 5px;
 	height: 5px;
 	border-radius: 50%;
-	background: #fff;
+	background: var(--color-bg);
 }
 
 .wpaim-ob-choice--selected .wpaim-ob-radio__dot {
@@ -505,7 +505,7 @@
 .wpaim-ob-section-label {
 	font-size: 0.625rem;
 	font-weight: 600;
-	color: #787c82;
+	color: var(--color-text-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.07em;
 	margin-top: var(--space-1);
@@ -519,10 +519,10 @@
 }
 
 .wpaim-ob-provider {
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius);
 	padding: var(--space-2) var(--space-2) var(--space-1);
-	background: #fff;
+	background: var(--color-bg);
 	cursor: pointer;
 	display: flex;
 	flex-direction: column;
@@ -581,12 +581,12 @@
 /* API key input */
 .wpaim-ob-key-input {
 	width: 100%;
-	background: #fff;
-	border: 1px solid #dcdcde;
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius);
 	padding: var(--space-2) var(--space-2);
 	font-size: 0.6875rem;
-	color: #1d2327;
+	color: var(--color-text-primary);
 	font-family: var(--font-mono, monospace);
 	transition: border-color 0.12s;
 }
@@ -611,9 +611,9 @@
 
 /* Optional collapsible */
 .wpaim-ob-optional {
-	border: 1px solid #e0e1e6;
+	border: 1px solid var(--color-border-subtle);
 	border-radius: var(--radius);
-	background: #fff;
+	background: var(--color-bg);
 	overflow: hidden;
 }
 
@@ -641,8 +641,8 @@
 	font-weight: 600;
 	padding: 2px 6px;
 	border-radius: 3px;
-	background: #e0e1e6;
-	color: #787c82;
+	background: var(--color-border-subtle);
+	color: var(--color-text-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 }
@@ -660,7 +660,7 @@
 
 .wpaim-ob-optional__body {
 	padding: var(--space-2) var(--space-3) var(--space-3);
-	border-top: 1px solid #e0e1e6;
+	border-top: 1px solid var(--color-border-subtle);
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-2);

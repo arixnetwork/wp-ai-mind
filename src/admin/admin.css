@@ -5,8 +5,8 @@
 	display: grid;
 	grid-template-columns: 220px 1fr 240px;
 	height: calc(100vh - 32px);
-	background: #fff;
-	color: #1d2327;
+	background: var(--color-bg);
+	color: var(--color-text-primary);
 	font-family: var(--font-sans);
 	font-size: var(--text-base);
 	overflow: hidden;
@@ -14,8 +14,8 @@
 
 /* ── Sidebar ── */
 .wpaim-sidebar {
-	background: #f0f0f1;
-	border-right: 1px solid #dcdcde;
+	background: var(--color-surface-2);
+	border-right: 1px solid var(--color-border);
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -26,7 +26,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--space-4) var(--space-4) var(--space-3);
-	border-bottom: 1px solid #dcdcde;
+	border-bottom: 1px solid var(--color-border);
 }
 
 .wpaim-sidebar__title {
@@ -118,8 +118,8 @@
 }
 
 .wpaim-bubble--ai .wpaim-bubble__content {
-	background: #f0f0f1;
-	border: 1px solid #e0e1e6;
+	background: var(--color-surface-2);
+	border: 1px solid var(--color-border-subtle);
 	border-top-left-radius: var(--radius-sm);
 }
 
@@ -150,8 +150,8 @@
 	flex-direction: column;
 	gap: 0;
 	padding: var(--space-4) var(--space-6);
-	border-top: 1px solid #dcdcde;
-	background: #fff;
+	border-top: 1px solid var(--color-border);
+	background: var(--color-bg);
 	position: relative;
 }
 
@@ -163,11 +163,11 @@
 
 .wpaim-composer__input {
 	flex: 1;
-	background: #fff;
-	border: 1px solid #dcdcde;
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius);
 	padding: var(--space-2) var(--space-3);
-	color: #1d2327;
+	color: var(--color-text-primary);
 	font-family: var(--font-sans);
 	font-size: var(--text-base);
 	resize: none;
@@ -231,8 +231,8 @@
 	bottom: calc(100% + var(--space-2));
 	left: var(--space-6);
 	right: var(--space-6);
-	background: #f8f9fa;
-	border: 1px solid #dcdcde;
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius-md);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 	z-index: 100;
@@ -244,7 +244,7 @@
 	align-items: center;
 	gap: var(--space-2);
 	padding: var(--space-2) var(--space-3);
-	border-bottom: 1px solid #e0e1e6;
+	border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .wpaim-context-picker__icon {
@@ -257,7 +257,7 @@
 	background: none;
 	border: none;
 	outline: none;
-	color: #1d2327;
+	color: var(--color-text-primary);
 	font-size: var(--text-base);
 	font-family: var(--font-sans);
 }
@@ -302,7 +302,7 @@
 }
 
 .wpaim-context-picker__item:hover {
-	background: #f0f0f1;
+	background: var(--color-surface-2);
 }
 
 .wpaim-context-picker__title {
@@ -316,8 +316,8 @@
 	flex-shrink: 0;
 	font-size: var(--text-xs);
 	color: var(--color-text-muted);
-	background: #f0f0f1;
-	border: 1px solid #e0e1e6;
+	background: var(--color-surface-2);
+	border: 1px solid var(--color-border-subtle);
 	border-radius: var(--radius-sm);
 	padding: 1px var(--space-1);
 }
@@ -366,8 +366,8 @@
 
 /* ── Right panel ── */
 .wpaim-right-panel {
-	background: #f8f9fa;
-	border-left: 1px solid #dcdcde;
+	background: var(--color-surface);
+	border-left: 1px solid var(--color-border);
 	overflow-y: auto;
 	padding: var(--space-4);
 	display: flex;
@@ -425,9 +425,9 @@
 }
 
 .wpaim-quick-action:hover {
-	background: #f0f0f1;
-	border-color: #dcdcde;
-	color: #1d2327;
+	background: var(--color-surface-2);
+	border-color: var(--color-border);
+	color: var(--color-text-primary);
 }
 
 .wpaim-pro-teaser {
@@ -463,10 +463,10 @@
 /* ── Select ── */
 .wpaim-select {
 	width: 100%;
-	background: #fff;
-	border: 1px solid #dcdcde;
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius-sm);
-	color: #1d2327;
+	color: var(--color-text-primary);
 	font-size: var(--text-sm);
 	padding: 0 var(--space-2);
 	height: 30px;
@@ -544,8 +544,8 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--space-4) var(--space-6);
-	border-bottom: 1px solid #e0e1e6;
-	background: #f8f9fa;
+	border-bottom: 1px solid var(--color-border-subtle);
+	background: var(--color-surface);
 }
 
 .wpaim-settings-title {
@@ -634,8 +634,8 @@
 	flex-direction: column;
 	gap: var(--space-2);
 	padding: var(--space-4);
-	background: #f8f9fa;
-	border: 1px solid #e0e1e6;
+	background: var(--color-surface);
+	border: 1px solid var(--color-border-subtle);
 	border-radius: var(--radius-md);
 	transition: border-color 0.1s;
 }
@@ -748,7 +748,7 @@
 }
 
 .wpaim-toggle__input:checked + .wpaim-toggle__track::after {
-	background: #fff;
+	background: var(--color-bg);
 	transform: translateX(16px);
 }
 
@@ -756,7 +756,7 @@
 .wpaim-settings-label {
 	font-size: 0.6875rem;
 	font-weight: 600;
-	color: #50575e;
+	color: var(--color-text-secondary);
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	margin-bottom: var(--space-1);
@@ -776,15 +776,15 @@
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	font-family: inherit;
-	border: 1px solid #dcdcde;
-	background: #f8f9fa;
-	color: #50575e;
+	border: 1px solid var(--color-border);
+	background: var(--color-surface);
+	color: var(--color-text-secondary);
 	transition: border-color 0.12s, color 0.12s;
 }
 
 .wpaim-btn--secondary:hover {
 	border-color: #8c8f94;
-	color: #1d2327;
+	color: var(--color-text-primary);
 }
 
 /* ════════════════════════════════════════════════
@@ -804,7 +804,7 @@
 
 /* QuickActions — WP admin colour overrides for tertiary Button */
 .wpaim-quick-action.components-button {
-	color: #50575e;
+	color: var(--color-text-secondary);
 	height: auto;
 	padding: var(--space-2) var(--space-3);
 	width: 100%;
@@ -812,8 +812,8 @@
 }
 
 .wpaim-quick-action.components-button:hover:not(:disabled) {
-	color: #1d2327;
-	background: #f0f0f1;
-	border-color: #dcdcde;
+	color: var(--color-text-primary);
+	background: var(--color-surface-2);
+	border-color: var(--color-border);
 }
 
