@@ -218,7 +218,7 @@ function PostRow( {
 	WorkArea,
 } ) {
 	const colSpan = 4 + columns.length;
-	const updated = new Date( post.modified ).toLocaleDateString( 'en-GB', {
+	const updated = new Date( post.modified ).toLocaleDateString( navigator.language, {
 		day: 'numeric',
 		month: 'short',
 	} );
