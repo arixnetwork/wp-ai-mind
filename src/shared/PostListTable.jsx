@@ -12,45 +12,51 @@ export default function PostListTable( { tabs, WorkArea, columns = [] } ) {
 	const [ search, setSearch ] = useState( '' );
 	const [ page, setPage ] = useState( 1 );
 	const [ expandedId, setExpandedId ] = useState( null );
-	const [ truncated, setTruncated ] = useState( false );
-
 	useEffect( () => {
 		const fetchAll = async () => {
 			try {
-				const fetchEndpoint = async ( path ) => {
-					const response = await apiFetch( { path, parse: false } );
-					const data = await response.json();
-					const total = parseInt(
-						response.headers.get( 'X-WP-Total' ) ?? '0',
-						10
-					);
-					return { data, total };
-				};
-
+				// Fetch all pages for a given post-type base path.
 				// context=edit is required so WordPress includes fields
 				// registered with schema context ['edit'], such as
 				// wpaim_seo_status. Without it the default 'view' context
 				// strips those fields and they arrive as undefined.
-				const [ postsRes, pagesRes ] = await Promise.all( [
-					fetchEndpoint(
-						'/wp/v2/posts?per_page=100&_embed=1&context=edit'
-					),
-					fetchEndpoint(
-						'/wp/v2/pages?per_page=100&_embed=1&context=edit'
-					),
+				const fetchAllPages = async ( base ) => {
+					const firstResponse = await apiFetch( {
+						path: `${ base }?per_page=100&_embed=1&context=edit&page=1`,
+						parse: false,
+					} );
+					const firstData = await firstResponse.json();
+					const totalPages = parseInt(
+						firstResponse.headers.get( 'X-WP-TotalPages' ) ?? '1',
+						10
+					);
+
+					if ( totalPages <= 1 ) {
+						return firstData;
+					}
+
+					const remainingRequests = [];
+					for ( let p = 2; p <= totalPages; p++ ) {
+						remainingRequests.push(
+							apiFetch( {
+								path: `${ base }?per_page=100&_embed=1&context=edit&page=${ p }`,
+								parse: false,
+							} ).then( ( r ) => r.json() )
+						);
+					}
+					const remainingData = await Promise.all( remainingRequests );
+					return [ firstData, ...remainingData ].flat();
+				};
+
+				const [ allPosts, allPages ] = await Promise.all( [
+					fetchAllPages( '/wp/v2/posts' ),
+					fetchAllPages( '/wp/v2/pages' ),
 				] );
 
-				const merged = [ ...postsRes.data, ...pagesRes.data ].sort(
+				const merged = [ ...allPosts, ...allPages ].sort(
 					( a, b ) => new Date( b.modified ) - new Date( a.modified )
 				);
 				setPosts( merged );
-
-				const totalFetched =
-					postsRes.data.length + pagesRes.data.length;
-				const totalAvailable = postsRes.total + pagesRes.total;
-				if ( totalAvailable > totalFetched ) {
-					setTruncated( true );
-				}
 			} catch ( e ) {
 				setError( e.message ?? 'Failed to load posts.' );
 			} finally {
@@ -104,12 +110,6 @@ export default function PostListTable( { tabs, WorkArea, columns = [] } ) {
 
 	return (
 		<div className="wpaim-post-list">
-			{ truncated && (
-				<div className="wpaim-list-notice">
-					⚠ Showing the 100 most recent posts and pages. Your site
-					has more content that is not listed here.
-				</div>
-			) }
 			<div className="wpaim-list-toolbar">
 				<div className="wpaim-list-tabs">
 					{ tabs.map( ( tab ) => (
