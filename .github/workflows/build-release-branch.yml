@@ -148,9 +148,11 @@ jobs:
           git checkout -b release/staging origin/main
 
       - name: Cherry-pick release-ready merge commits
+        env:
+          SHAS: ${{ steps.collect.outputs.shas }}
         run: |
           set -euo pipefail
-          for SHA in ${{ steps.collect.outputs.shas }}; do
+          for SHA in $SHAS; do
             echo "Cherry-picking $SHA"
             # -m 1 uses the first parent (main-line) diff for merge commits.
             git cherry-pick -m 1 "$SHA" || {
@@ -183,28 +185,33 @@ jobs:
       # ── Step 5: Update version files ──────────────────────────────────────
 
       - name: Update version in wp-ai-mind.php
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION=${{ steps.version.outputs.version }}
           # Plugin header — "Version:           X.Y.Z"
           sed -i "s/^\( \* Version:\s*\).*/\1${VERSION}/" wp-ai-mind.php
           # Version constant — define( 'WP_AI_MIND_VERSION', 'X.Y.Z' );
           sed -i "s/define( 'WP_AI_MIND_VERSION', '[^']*' );/define( 'WP_AI_MIND_VERSION', '${VERSION}' );/" wp-ai-mind.php
 
       - name: Update Stable tag in readme.txt
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION=${{ steps.version.outputs.version }}
           sed -i "s/^Stable tag: .*/Stable tag: ${VERSION}/" readme.txt
 
       - name: Update version in package.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version
+          npm version "$VERSION" --no-git-tag-version
 
       # ── Step 6: Update CHANGELOG.md ───────────────────────────────────────
 
       - name: Update CHANGELOG.md
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          VERSION=${{ steps.version.outputs.version }}
           DATE=$(date -u +%Y-%m-%d)
 
           # Find the last vX.Y.Z tag to bound the log range.
@@ -233,15 +240,17 @@ jobs:
       # ── Step 7: Commit, rename branch, and push ───────────────────────────
 
       - name: Commit version bump
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION=${{ steps.version.outputs.version }}
           git add wp-ai-mind.php readme.txt package.json package-lock.json CHANGELOG.md
           git commit -m "chore: release v${VERSION}"
 
       - name: Rename branch to release/vX.Y.Z and push
         id: push
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION=${{ steps.version.outputs.version }}
           BRANCH="release/v${VERSION}"
           git branch -m "release/v${VERSION}"
           git push -u origin "${BRANCH}"
@@ -252,11 +261,10 @@ jobs:
       - name: Open release PR to main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ steps.push.outputs.branch }}
+          FEATURES: ${{ steps.collect.outputs.feature_list }}
         run: |
-          VERSION=${{ steps.version.outputs.version }}
-          BRANCH=${{ steps.push.outputs.branch }}
-          FEATURES="${{ steps.collect.outputs.feature_list }}"
-
           gh pr create \
             --title "chore: release v${VERSION}" \
             --base main \
