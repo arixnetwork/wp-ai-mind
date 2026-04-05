@@ -85,11 +85,17 @@ jobs:
 
             Example command for a blocking issue:
 
-              gh issue create \
+              ISSUE_URL=$(gh issue create \
                 --title "<concise title for the finding>" \
                 --body "Found during review of PR #${{ github.event.pull_request.number }}\n\n**PR:** ${{ github.event.pull_request.html_url }}\n**Base branch:** ${{ github.event.pull_request.base.ref }}\n\n## Description\n\n<details>" \
-                --label "code-review,blocking,auto-fix" \
-                --repo ${{ github.repository }}
+                --label "code-review,blocking" \
+                --repo ${{ github.repository }})
+              ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
+              gh issue edit "$ISSUE_NUMBER" --add-label "auto-fix" --repo ${{ github.repository }}
+
+            The two-step label approach is required: labels applied at issue creation do not
+            fire the `issues: labeled` event, so the auto-fix workflow would never trigger.
+            Adding `auto-fix` in a separate `gh issue edit` call fires that event correctly.
 
             Capture the URL returned by each `gh issue create` call.
 
