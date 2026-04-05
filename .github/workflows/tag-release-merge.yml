@@ -57,14 +57,16 @@ jobs:
           echo "tag=v$VERSION"    >> "$GITHUB_OUTPUT"
 
       - name: Guard against duplicate tag
+        id: guard
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           if git rev-parse --verify "refs/tags/${TAG}" >/dev/null 2>&1; then
             echo "Tag ${TAG} already exists — nothing to do."
-            exit 0
+            echo "already_exists=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create and push release tag
+        if: steps.guard.outputs.already_exists != 'true'
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           MERGE_SHA="${{ github.event.pull_request.merge_commit_sha }}"
