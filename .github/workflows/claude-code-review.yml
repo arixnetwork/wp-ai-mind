@@ -31,7 +31,23 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Guard — skip if workflow files changed
+        id: guard
+        run: |
+          count=$(gh api \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --jq '[.[] | select(.filename | startswith(".github/workflows/"))] | length')
+          if [[ "$count" -gt 0 ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping Claude Code Review — this PR modifies workflow files. The claude-code-action security check would fail because the workflow on this branch differs from main."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Run Claude Code Review
+        if: steps.guard.outputs.skip != 'true'
         id: claude-review
         uses: anthropics/claude-code-action@aee99972d0cfa0c47a4563e6fca42d7a5a0cb9bd  # v1
         with:
