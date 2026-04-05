@@ -1,3 +1,4 @@
+/* global navigator */
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 import DOMPurify from 'dompurify';
@@ -218,10 +219,13 @@ function PostRow( {
 	WorkArea,
 } ) {
 	const colSpan = 4 + columns.length;
-	const updated = new Date( post.modified ).toLocaleDateString( navigator.language, {
-		day: 'numeric',
-		month: 'short',
-	} );
+	const updated = new Date( post.modified ).toLocaleDateString(
+		navigator.language,
+		{
+			day: 'numeric',
+			month: 'short',
+		}
+	);
 
 	return (
 		<>
