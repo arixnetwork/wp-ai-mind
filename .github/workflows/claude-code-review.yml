@@ -66,7 +66,7 @@ jobs:
             security concern, missing test coverage), create a GitHub issue.
 
             Classify each finding:
-            - **blocking** (bug, security flaw, data loss risk) → labels: `code-review,blocking,auto-fix`
+            - **blocking** (bug, security flaw, data loss risk) → labels: `code-review,blocking`
             - **improvement** (non-trivial refactor, missing tests, performance) → labels: `code-review,enhancement`
             - **nit/style** → no issue, PR comment only
 
