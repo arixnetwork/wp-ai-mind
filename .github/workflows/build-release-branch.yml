@@ -212,14 +212,19 @@ jobs:
             RAW_LOG=$(git log --pretty="format:- %s" | grep -v "^- Merge " | head -100 || true)
           fi
 
-          ENTRY="## [${VERSION}] — ${DATE}\n\n${RAW_LOG}\n"
+          # Write the new entry to a temp file (printf %b expands \n properly).
+          ENTRY_FILE=$(mktemp)
+          printf "## [%s] — %s\n\n%s\n\n" "${VERSION}" "${DATE}" "${RAW_LOG}" > "${ENTRY_FILE}"
 
-          # Prepend the entry before the first existing ## heading (or at top).
-          if grep -q "^## " CHANGELOG.md 2>/dev/null; then
-            sed -i "0,/^## /{s/^## /${ENTRY}\n## /}" CHANGELOG.md
+          # Prepend: cat entry + existing CHANGELOG into a temp, then replace.
+          CHANGELOG_TMP=$(mktemp)
+          if [ -f CHANGELOG.md ]; then
+            cat "${ENTRY_FILE}" CHANGELOG.md > "${CHANGELOG_TMP}"
           else
-            printf "%b\n$(cat CHANGELOG.md)" "$ENTRY" > CHANGELOG.md
+            cp "${ENTRY_FILE}" "${CHANGELOG_TMP}"
           fi
+          mv "${CHANGELOG_TMP}" CHANGELOG.md
+          rm -f "${ENTRY_FILE}"
 
       # ── Step 7: Commit, rename branch, and push ───────────────────────────
 
