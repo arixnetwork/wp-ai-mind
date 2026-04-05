@@ -1,0 +1,290 @@
+name: Build Release Branch
+
+# Triggered manually when it's time to cut a release from `develop`.
+#
+# The workflow:
+#   1. Finds all `merged/*` annotated tags whose originating PR carries the
+#      `release-ready` label.
+#   2. Creates a `release/vX.Y.Z` branch from `main` and cherry-picks those
+#      merge commits onto it.
+#   3. Derives the next version automatically via `semantic-release --dry-run`.
+#   4. Bumps version numbers in wp-ai-mind.php (×2), readme.txt, package.json,
+#      and prepends a CHANGELOG entry.
+#   5. Commits, pushes the branch, and opens a PR to `main`.
+#
+# No version input is required — the version comes entirely from conventional
+# commit messages on the cherry-picked commits.
+#
+# After the PR is reviewed and merged, `tag-release-merge.yml` automatically
+# creates the `vX.Y.Z` tag, which triggers the existing `release.yml` to build
+# the zip and publish the GitHub Release.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build release branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # ── Step 1: Ensure the release-ready label exists ─────────────────────
+
+      - name: Ensure release-ready label exists
+        run: |
+          gh label create "release-ready" \
+            --color "#0e8a16" \
+            --description "Include this feature in the next release branch" \
+            --repo "${{ github.repository }}" 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 2: Find release-ready merge commits ───────────────────────────
+
+      - name: Collect release-ready merge commits
+        id: collect
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          git fetch --tags
+
+          # List all merged/* tags, oldest first.
+          TAGS=$(git tag -l 'merged/*' --sort=version:refname)
+
+          if [ -z "$TAGS" ]; then
+            echo "::error::No merged/* tags found. Merge at least one feature branch to develop first."
+            exit 1
+          fi
+
+          SELECTED_SHAS=""
+          FEATURE_LIST=""
+
+          for TAG in $TAGS; do
+            # Read the annotation — format: "PR #NNN: branch-name"
+            ANNOTATION=$(git tag -v "$TAG" 2>&1 | grep -oP '(?<=tagger .{0,80}\n).*' || \
+                         git for-each-ref "refs/tags/$TAG" --format='%(contents)' | head -1)
+
+            # Robust extraction: look for "PR #NNN" anywhere in annotation
+            PR_NUMBER=$(git for-each-ref "refs/tags/$TAG" --format='%(contents)' \
+                        | grep -oP '(?<=PR #)\d+' | head -1 || true)
+
+            if [ -z "$PR_NUMBER" ]; then
+              echo "Warning: could not extract PR number from tag $TAG — skipping."
+              continue
+            fi
+
+            # Check if the PR has the release-ready label.
+            LABELS=$(gh pr view "$PR_NUMBER" \
+              --repo "${{ github.repository }}" \
+              --json labels \
+              --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
+
+            if echo "$LABELS" | grep -q "release-ready"; then
+              SHA=$(git rev-list -n 1 "$TAG")
+              BRANCH_NAME=$(git for-each-ref "refs/tags/$TAG" --format='%(contents)' \
+                            | grep -oP '(?<=PR #\d{1,6}: ).+' | head -1 || echo "$TAG")
+              echo "Selected: $TAG (PR #$PR_NUMBER) — SHA $SHA"
+              SELECTED_SHAS="${SELECTED_SHAS} ${SHA}"
+              FEATURE_LIST="${FEATURE_LIST}\n- ${BRANCH_NAME} (PR #${PR_NUMBER})"
+            else
+              echo "Skipping: $TAG (PR #$PR_NUMBER) — no release-ready label"
+            fi
+          done
+
+          if [ -z "$(echo "$SELECTED_SHAS" | tr -d ' ')" ]; then
+            echo "::error::No release-ready features found. Apply the 'release-ready' label to merged PRs before building a release."
+            exit 1
+          fi
+
+          # Sort SHAs by commit date (oldest first) so cherry-picks apply cleanly.
+          SORTED_SHAS=$(echo "$SELECTED_SHAS" | tr ' ' '\n' | grep -v '^$' \
+            | xargs -I{} git log -1 --format="%ct %H" {} \
+            | sort -n | awk '{print $2}')
+
+          # Store as newline-separated; GitHub outputs can't contain raw newlines.
+          echo "shas=$(echo "$SORTED_SHAS" | tr '\n' ' ' | xargs)" >> "$GITHUB_OUTPUT"
+          # Use a delimiter for multiline feature list
+          {
+            echo "feature_list<<EOF_FEATURES"
+            echo -e "$FEATURE_LIST"
+            echo "EOF_FEATURES"
+          } >> "$GITHUB_OUTPUT"
+
+      # ── Step 3: Build release branch from main ────────────────────────────
+
+      - name: Delete stale release/staging branch if it exists
+        run: |
+          git push origin --delete release/staging 2>/dev/null || true
+
+      - name: Create release/staging branch from main
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -b release/staging origin/main
+
+      - name: Cherry-pick release-ready merge commits
+        env:
+          SHAS: ${{ steps.collect.outputs.shas }}
+        run: |
+          set -euo pipefail
+          for SHA in $SHAS; do
+            echo "Cherry-picking $SHA"
+            # -m 1 uses the first parent (main-line) diff for merge commits.
+            git cherry-pick -m 1 "$SHA" || {
+              echo "::error::Cherry-pick of $SHA failed — conflicts must be resolved manually."
+              git cherry-pick --abort 2>/dev/null || true
+              exit 1
+            }
+          done
+
+      # ── Step 4: Determine version with semantic-release (dry-run) ─────────
+
+      - name: Determine next version
+        id: version
+        run: |
+          set -euo pipefail
+
+          npx semantic-release --dry-run --no-ci 2>&1 | tee /tmp/sr-output.txt || true
+
+          VERSION=$(grep -oP 'The next release version is \K[^\s]+' /tmp/sr-output.txt | head -1 || true)
+
+          if [ -z "$VERSION" ]; then
+            echo "::error::semantic-release could not determine a next version. Ensure the cherry-picked commits follow Conventional Commits (feat:, fix:, etc.)."
+            cat /tmp/sr-output.txt
+            exit 1
+          fi
+
+          echo "Next version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # ── Step 5: Update version files ──────────────────────────────────────
+
+      - name: Update version in wp-ai-mind.php
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Plugin header — "Version:           X.Y.Z"
+          sed -i "s/^\( \* Version:\s*\).*/\1${VERSION}/" wp-ai-mind.php
+          # Version constant — define( 'WP_AI_MIND_VERSION', 'X.Y.Z' );
+          sed -i "s/define( 'WP_AI_MIND_VERSION', '[^']*' );/define( 'WP_AI_MIND_VERSION', '${VERSION}' );/" wp-ai-mind.php
+
+      - name: Update Stable tag in readme.txt
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          sed -i "s/^Stable tag: .*/Stable tag: ${VERSION}/" readme.txt
+
+      - name: Update version in package.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          npm version "$VERSION" --no-git-tag-version
+
+      # ── Step 6: Update CHANGELOG.md ───────────────────────────────────────
+
+      - name: Update CHANGELOG.md
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          DATE=$(date -u +%Y-%m-%d)
+
+          # Find the last vX.Y.Z tag to bound the log range.
+          LAST_TAG=$(git describe --tags --abbrev=0 --match "v*" origin/main 2>/dev/null || true)
+
+          if [ -n "$LAST_TAG" ]; then
+            RAW_LOG=$(git log "${LAST_TAG}..HEAD" --pretty="format:- %s" | grep -v "^- Merge " || true)
+          else
+            RAW_LOG=$(git log --pretty="format:- %s" | grep -v "^- Merge " | head -100 || true)
+          fi
+
+          # Write the new entry to a temp file (printf %b expands \n properly).
+          ENTRY_FILE=$(mktemp)
+          printf "## [%s] — %s\n\n%s\n\n" "${VERSION}" "${DATE}" "${RAW_LOG}" > "${ENTRY_FILE}"
+
+          # Prepend: cat entry + existing CHANGELOG into a temp, then replace.
+          CHANGELOG_TMP=$(mktemp)
+          if [ -f CHANGELOG.md ]; then
+            cat "${ENTRY_FILE}" CHANGELOG.md > "${CHANGELOG_TMP}"
+          else
+            cp "${ENTRY_FILE}" "${CHANGELOG_TMP}"
+          fi
+          mv "${CHANGELOG_TMP}" CHANGELOG.md
+          rm -f "${ENTRY_FILE}"
+
+      # ── Step 7: Commit, rename branch, and push ───────────────────────────
+
+      - name: Commit version bump
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git add wp-ai-mind.php readme.txt package.json package-lock.json CHANGELOG.md
+          git commit -m "chore: release v${VERSION}"
+
+      - name: Rename branch to release/vX.Y.Z and push
+        id: push
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          BRANCH="release/v${VERSION}"
+          git branch -m "release/v${VERSION}"
+          git push -u origin "${BRANCH}"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+
+      # ── Step 8: Open PR to main ────────────────────────────────────────────
+
+      - name: Open release PR to main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ steps.push.outputs.branch }}
+          FEATURES: ${{ steps.collect.outputs.feature_list }}
+        run: |
+          gh pr create \
+            --title "chore: release v${VERSION}" \
+            --base main \
+            --head "${BRANCH}" \
+            --body "$(cat <<EOF
+          ## Release v${VERSION}
+
+          ### Features included
+          ${FEATURES}
+
+          ### What happens when this PR merges
+          1. \`tag-release-merge.yml\` automatically creates the \`v${VERSION}\` git tag
+          2. \`release.yml\` triggers on that tag, builds the plugin zip, and publishes the GitHub Release
+
+          ## Test plan
+          - [ ] CI passes on this branch
+          - [ ] Version is correct in \`wp-ai-mind.php\` (header + constant), \`readme.txt\`, \`package.json\`
+          - [ ] CHANGELOG entry is accurate and dated correctly
+          - [ ] No unintended files changed
+
+          > Merge this PR to trigger the automated tag and release build.
+          EOF
+          )"
