@@ -1,4 +1,4 @@
-/* ── Dashboard shell ─────────────────────────────────────────────── */
+/* ── Dashboard shell ──────────────────────────────────────────────────────── */
 
 .wpaim-dashboard {
 	display: flex;
@@ -43,7 +43,7 @@
 	color: var(--color-text-muted);
 }
 
-/* ── Status banner ──────────────────────────────────────────────── */
+/* ── Status banner ──────────────────────────────────────────────────────────── */
 
 .wpaim-dash-banner {
 	margin: var(--space-4) var(--space-6) 0;
@@ -98,7 +98,7 @@
 	flex-shrink: 0;
 }
 
-/* ── Page body ──────────────────────────────────────────────────── */
+/* ── Page body ──────────────────────────────────────────────────────────────── */
 
 .wpaim-dash-body {
 	flex: 1;
@@ -124,7 +124,7 @@
 	font-family: var(--font-mono, monospace);
 }
 
-/* ── Start tiles ────────────────────────────────────────────────── */
+/* ── Start tiles ────────────────────────────────────────────────────────────── */
 
 .wpaim-dash-tiles {
 	display: grid;
@@ -136,7 +136,7 @@
 	background: var(--color-surface);
 	border: 1px solid var(--color-border-subtle);
 	border-radius: var(--radius);
-	padding: var(--space-3) var(--space-3) var(--space-7);
+	padding: var(--space-4) var(--space-4) var(--space-7);
 	cursor: pointer;
 	position: relative;
 	overflow: hidden;
@@ -152,7 +152,7 @@
 	left: 0;
 	right: 0;
 	height: 1px;
-	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
 }
 
 .wpaim-dash-tile:hover {
@@ -201,7 +201,7 @@
 	padding-right: var(--space-3);
 }
 
-/* ── Resource list ──────────────────────────────────────────────── */
+/* ── Resource list ──────────────────────────────────────────────────────────── */
 
 .wpaim-dash-resources {
 	background: var(--color-surface);
@@ -213,7 +213,7 @@
 .wpaim-dash-resource {
 	display: flex;
 	align-items: center;
-	padding: var(--space-2) var(--space-3);
+	padding: var(--space-3) var(--space-3);
 	border-bottom: 1px solid var(--color-border-subtle);
 	text-decoration: none;
 	transition: background 0.1s;
@@ -257,7 +257,7 @@
 	color: var(--wp-admin-theme-color);
 }
 
-/* ── Page footer ────────────────────────────────────────────────── */
+/* ── Page footer ────────────────────────────────────────────────────────────── */
 
 .wpaim-dash-footer {
 	padding: var(--space-3) var(--space-6) var(--space-4);
@@ -292,7 +292,7 @@
 	flex-shrink: 0;
 }
 
-/* ── Buttons (shared small) ─────────────────────────────────────── */
+/* ── Buttons (shared small) ─────────────────────────────────────────────────── */
 
 .wpaim-dash-btn {
 	font-size: 0.6875rem;
@@ -437,7 +437,7 @@
 
 /* Choice radio cards */
 .wpaim-ob-choice {
-	border: 1px solid var(--color-border-subtle);
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius);
 	padding: var(--space-2) var(--space-3);
 	display: flex;
@@ -449,13 +449,13 @@
 }
 
 .wpaim-ob-choice:hover {
-	border-color: var(--color-border);
+	border-color: #8c8f94;
 	background: var(--color-surface-2);
 }
 
 .wpaim-ob-choice--selected {
-	border-color: rgba(var(--wp-admin-theme-color--rgb), 0.3);
-	background: rgba(var(--wp-admin-theme-color--rgb), 0.12);
+	border-color: var(--wp-admin-theme-color);
+	background: color-mix(in srgb, var(--wp-admin-theme-color) 6%, #fff);
 }
 
 .wpaim-ob-radio {
@@ -481,7 +481,7 @@
 	width: 5px;
 	height: 5px;
 	border-radius: 50%;
-	background: #fff;
+	background: var(--color-bg);
 }
 
 .wpaim-ob-choice--selected .wpaim-ob-radio__dot {
@@ -519,7 +519,7 @@
 }
 
 .wpaim-ob-provider {
-	border: 1px solid var(--color-border-subtle);
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius);
 	padding: var(--space-2) var(--space-2) var(--space-1);
 	background: var(--color-bg);
@@ -532,12 +532,12 @@
 }
 
 .wpaim-ob-provider:hover {
-	border-color: var(--color-border);
+	border-color: #8c8f94;
 }
 
 .wpaim-ob-provider--selected {
-	border-color: rgba(var(--wp-admin-theme-color--rgb), 0.3);
-	background: rgba(var(--wp-admin-theme-color--rgb), 0.12);
+	border-color: var(--wp-admin-theme-color);
+	background: color-mix(in srgb, var(--wp-admin-theme-color) 6%, #fff);
 }
 
 .wpaim-ob-provider__check {
@@ -593,7 +593,12 @@
 
 .wpaim-ob-key-input:focus {
 	outline: none;
-	border-color: rgba(var(--wp-admin-theme-color--rgb), 0.3);
+	border-color: var(--wp-admin-theme-color);
+}
+
+.wpaim-ob-key-input:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color);
+	outline-offset: 2px;
 }
 
 .wpaim-ob-key-input::placeholder {
@@ -683,7 +688,7 @@
 }
 
 .wpaim-ob-devnote code {
-	background: rgba(0, 0, 0, 0.3);
+	background: rgba(0, 0, 0, 0.08);
 	padding: 1px 4px;
 	border-radius: 3px;
 	font-size: 0.5625rem;

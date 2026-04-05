@@ -3,7 +3,7 @@
 /* ── Sidebar container ──────────────────────────────────────────────── */
 .wpaim-editor-sidebar {
 	padding: var(--space-4);
-	background: var(--color-surface-1, var(--color-surface));
+	background: var(--color-bg);
 	color: var(--color-text-primary);
 	font-size: var(--text-base);
 }
@@ -65,12 +65,17 @@
 	flex: 1;
 	border: 1px solid var(--color-border);
 	border-radius: var(--radius-sm);
-	background: var(--color-surface-2);
+	background: var(--color-bg);
 	color: var(--color-text-primary);
 	font-size: var(--text-sm);
 	padding: var(--space-2) var(--space-3);
 	outline: none;
 	transition: border-color 0.15s ease;
+}
+
+.wpaim-editor-mini-chat__input:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color);
+	outline-offset: 2px;
 }
 
 .wpaim-editor-mini-chat__input:focus {
