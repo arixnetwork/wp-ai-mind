@@ -100,3 +100,48 @@ used by `.github/workflows/auto-fix-review-issue.yml` only needs to be
 
 See `RELEASING.md` for the full release checklist.
 Agents must never trigger a release without explicit user instruction.
+
+---
+
+## Feature-Grouping & Release System
+
+The repo uses an automated feature-grouping system. Understand it before touching branches, tags, or labels.
+
+### How it works
+
+1. Feature PRs target `develop` and are merged as **merge commits** (not squash).
+2. On every push to `develop`, `tag-feature-merge.yml` automatically creates an annotated tag `merged/<branch-name>` at each merge commit. The tag annotation contains the PR number: `PR #NN: branch-name`.
+3. The `release-ready` label on a PR signals "include this feature in the next release."
+4. Running the `Build Release Branch` workflow (`workflow_dispatch`) collects all `merged/*` tags whose PR has `release-ready`, cherry-picks them onto a new `release/vX.Y.Z` branch, bumps versions, and opens a PR to `main`.
+5. When that PR merges, `tag-release-merge.yml` creates the `vX.Y.Z` tag → `release.yml` builds the zip.
+
+### Agent rules for this system
+
+- **NEVER apply `release-ready` to a PR automatically.** It is a deliberate human release decision. Only apply it when explicitly instructed by the user.
+- **NEVER trigger `build-release-branch.yml`** (or any release workflow) without explicit user instruction.
+- **NEVER create, move, or delete `merged/*` tags.** They are managed exclusively by `tag-feature-merge.yml`.
+- **NEVER push `v*` tags directly.** Tags are created by `tag-release-merge.yml` on PR merge.
+- PRs from agents targeting `develop` should follow the same Conventional Commits convention as all other PRs — this is critical for `semantic-release` to correctly derive the version bump.
+
+### Querying release state (for agents)
+
+When the user asks "what features are queued for release?" or similar:
+
+```bash
+# List all merged/* tags
+git tag -l 'merged/*' --sort=version:refname
+
+# For each tag, check if its PR has release-ready label
+# (extract PR number from tag annotation first)
+git for-each-ref 'refs/tags/merged/*' --format='%(refname:short) %(contents)'
+
+gh pr view <PR_NUMBER> --repo niklas-joh/wp-ai-mind \
+  --json number,title,labels,state \
+  --jq '{number,title,labels:[.labels[].name],state}'
+```
+
+### PR targets
+
+- Feature work: PR targets `develop`
+- Hotfixes that must bypass `develop`: PR targets `main` directly (document in `RELEASING.md` emergency section)
+- Release branches (`release/vX.Y.Z`): PR targets `main` (created automatically by `build-release-branch.yml`)
