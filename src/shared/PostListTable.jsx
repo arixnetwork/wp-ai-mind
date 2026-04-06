@@ -45,7 +45,8 @@ export default function PostListTable( { tabs, WorkArea, columns = [] } ) {
 							} ).then( ( r ) => r.json() )
 						);
 					}
-					const remainingData = await Promise.all( remainingRequests );
+					const remainingData =
+						await Promise.all( remainingRequests );
 					return [ firstData, ...remainingData ].flat();
 				};
 
