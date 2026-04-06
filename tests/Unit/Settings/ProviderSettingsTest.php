@@ -37,6 +37,40 @@ class ProviderSettingsTest extends TestCase {
         $this->assertSame( 'sk-ant-test-key', $settings2->get_api_key( 'claude' ) );
     }
 
+    public function test_env_var_takes_priority_over_db_value(): void {
+        $stored = [];
+        Functions\when( 'get_option' )->alias( function( $k, $d = null ) use ( &$stored ) { return $stored[ $k ] ?? $d; } );
+        Functions\when( 'update_option' )->alias( function( $k, $v ) use ( &$stored ) {
+            $stored[ $k ] = $v;
+            return true;
+        } );
+
+        $settings = new ProviderSettings();
+        $settings->set_api_key( 'claude', 'sk-ant-from-db' );
+
+        putenv( 'CLAUDE_API_KEY=sk-ant-from-env' );
+        $settings2 = new ProviderSettings();
+        $this->assertSame( 'sk-ant-from-env', $settings2->get_api_key( 'claude' ) );
+
+        putenv( 'CLAUDE_API_KEY' ); // clean up.
+    }
+
+    public function test_falls_back_to_db_when_env_var_not_set(): void {
+        $stored = [];
+        Functions\when( 'get_option' )->alias( function( $k, $d = null ) use ( &$stored ) { return $stored[ $k ] ?? $d; } );
+        Functions\when( 'update_option' )->alias( function( $k, $v ) use ( &$stored ) {
+            $stored[ $k ] = $v;
+            return true;
+        } );
+
+        putenv( 'CLAUDE_API_KEY' ); // ensure unset.
+        $settings = new ProviderSettings();
+        $settings->set_api_key( 'claude', 'sk-ant-from-db' );
+
+        $settings2 = new ProviderSettings();
+        $this->assertSame( 'sk-ant-from-db', $settings2->get_api_key( 'claude' ) );
+    }
+
     public function test_api_key_is_not_stored_in_plaintext(): void {
         $stored = [];
         Functions\when( 'get_option' )->alias( function( $k, $d = null ) use ( &$stored ) { return $stored[ $k ] ?? $d; } );
