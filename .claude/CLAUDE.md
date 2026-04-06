@@ -34,7 +34,7 @@ the compiled `assets/` whenever `src/` files are committed. No manual build step
 
 ### Pull Request Rules
 
-- Every PR targets `main` (default base branch).
+- Feature/fix/chore PRs target `develop`. Only hotfixes and `release/vX.Y.Z` branches target `main` directly (see "PR targets" section below).
 - PR title must follow Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
 - Include a short summary and a test plan in the PR body.
 - Request review before merging — do not self-merge without explicit user instruction.
