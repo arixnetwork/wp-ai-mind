@@ -214,7 +214,7 @@
 	display: flex;
 	align-items: center;
 	padding: var(--space-3) var(--space-3);
-	border-bottom: 1px solid #e0e1e6;
+	border-bottom: 1px solid var(--color-border-subtle);
 	text-decoration: none;
 	transition: background 0.1s;
 	gap: var(--space-3);
@@ -437,7 +437,7 @@
 
 /* Choice radio cards */
 .wpaim-ob-choice {
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius);
 	padding: var(--space-2) var(--space-3);
 	display: flex;
@@ -450,7 +450,7 @@
 
 .wpaim-ob-choice:hover {
 	border-color: #8c8f94;
-	background: #f0f0f1;
+	background: var(--color-surface-2);
 }
 
 .wpaim-ob-choice--selected {
@@ -481,7 +481,7 @@
 	width: 5px;
 	height: 5px;
 	border-radius: 50%;
-	background: #fff;
+	background: var(--color-bg);
 }
 
 .wpaim-ob-choice--selected .wpaim-ob-radio__dot {
@@ -519,7 +519,7 @@
 }
 
 .wpaim-ob-provider {
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--color-border);
 	border-radius: var(--radius);
 	padding: var(--space-2) var(--space-2) var(--space-1);
 	background: #fff;

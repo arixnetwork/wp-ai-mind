@@ -15,6 +15,10 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      # Required by anthropics/claude-code-action when using claude_code_oauth_token:
+      # the action fetches a GitHub OIDC token internally to verify the workflow's
+      # identity before accepting the OAuth token.
+      id-token: write
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
@@ -27,9 +31,11 @@ jobs:
         run: |
           printf '%s' "$ISSUE_TITLE" > /tmp/issue-title.txt
           printf '%s' "$ISSUE_BODY"  > /tmp/issue-body.txt
+          printf '%s' "$ISSUE_URL"   > /tmp/issue-url.txt
         env:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY:  ${{ github.event.issue.body }}
+          ISSUE_URL:   ${{ github.event.issue.html_url }}
 
       - uses: anthropics/claude-code-action@aee99972d0cfa0c47a4563e6fca42d7a5a0cb9bd  # v1
         with:
@@ -39,7 +45,7 @@ jobs:
             Issue #${{ github.event.issue.number }} has been labeled `auto-fix` and needs to be resolved.
 
             **Issue title:** (read from /tmp/issue-title.txt)
-            **Issue URL:** ${{ github.event.issue.html_url }}
+            **Issue URL:** (read from /tmp/issue-url.txt)
 
             **Issue body:** (read from /tmp/issue-body.txt)
 

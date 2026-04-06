@@ -3,8 +3,8 @@
 /* ── Sidebar container ──────────────────────────────────────────────── */
 .wpaim-editor-sidebar {
 	padding: var(--space-4);
-	background: #fff;
-	color: #1d2327;
+	background: var(--color-bg);
+	color: var(--color-text-primary);
 	font-size: var(--text-base);
 }
 
@@ -65,8 +65,8 @@
 	flex: 1;
 	border: 1px solid #dcdcde;
 	border-radius: var(--radius-sm);
-	background: #fff;
-	color: #1d2327;
+	background: var(--color-bg);
+	color: var(--color-text-primary);
 	font-size: var(--text-sm);
 	padding: var(--space-2) var(--space-3);
 	outline: none;

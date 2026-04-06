@@ -70,8 +70,8 @@
 
 /* Card */
 .wpaim-generator__card {
-	background: #f8f9fa;
-	border: 1px solid #e0e1e6;
+	background: var(--color-surface);
+	border: 1px solid var(--color-border-subtle);
 	border-radius: var(--radius-md);
 	padding: var(--space-6);
 }

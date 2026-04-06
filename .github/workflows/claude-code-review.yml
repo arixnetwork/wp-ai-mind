@@ -3,12 +3,11 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    paths-ignore:
+      - "package-lock.json"
+      - "composer.lock"
+      - "yarn.lock"
+      - "*.lock"
 
 jobs:
   claude-review:
@@ -17,8 +16,9 @@ jobs:
     #   github.event.pull_request.user.login == 'external-contributor' ||
     #   github.event.pull_request.user.login == 'new-developer' ||
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-    
+
     runs-on: ubuntu-latest
+    continue-on-error: true  # review is informational; never block merges
     permissions:
       contents: read
       pull-requests: write
@@ -31,7 +31,23 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Guard — skip if workflow files changed
+        id: guard
+        run: |
+          count=$(gh api \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --jq '[.[] | select(.filename | startswith(".github/workflows/"))] | length')
+          if [[ "$count" -gt 0 ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping Claude Code Review — this PR modifies workflow files. The claude-code-action security check would fail because the workflow on this branch differs from main."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Run Claude Code Review
+        if: steps.guard.outputs.skip != 'true'
         id: claude-review
         uses: anthropics/claude-code-action@aee99972d0cfa0c47a4563e6fca42d7a5a0cb9bd  # v1
         with:
@@ -66,7 +82,7 @@ jobs:
             security concern, missing test coverage), create a GitHub issue.
 
             Classify each finding:
-            - **blocking** (bug, security flaw, data loss risk) → labels: `code-review,blocking,auto-fix`
+            - **blocking** (bug, security flaw, data loss risk) → labels: `code-review,blocking`
             - **improvement** (non-trivial refactor, missing tests, performance) → labels: `code-review,enhancement`
             - **nit/style** → no issue, PR comment only
 
@@ -116,4 +132,3 @@ jobs:
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/sdk#command-line for available options
           claude_args: "--allowedTools Bash(gh:*),Read,Glob,Grep"
-

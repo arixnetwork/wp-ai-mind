@@ -13,6 +13,7 @@ export default function PostListTable( { tabs, WorkArea, columns = [] } ) {
 	const [ search, setSearch ] = useState( '' );
 	const [ page, setPage ] = useState( 1 );
 	const [ expandedId, setExpandedId ] = useState( null );
+
 	useEffect( () => {
 		const fetchAll = async () => {
 			try {
