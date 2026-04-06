@@ -7,6 +7,11 @@ class ProviderSettings {
 	private const OPTION_KEY      = 'wp_ai_mind_provider_keys';
 	private const CIPHER          = 'AES-256-CBC';
 	private const VALID_PROVIDERS = [ 'claude', 'openai', 'gemini', 'ollama' ];
+	private const ENV_VARS        = [
+		'claude' => 'CLAUDE_API_KEY',
+		'openai' => 'OPENAI_API_KEY',
+		'gemini' => 'GEMINI_API_KEY',
+	];
 
 	private array $keys;
 
@@ -16,6 +21,14 @@ class ProviderSettings {
 	}
 
 	public function get_api_key( string $provider ): string {
+		$env_var = self::ENV_VARS[ $provider ] ?? null;
+		if ( $env_var ) {
+			$env_value = getenv( $env_var );
+			if ( false !== $env_value && '' !== $env_value ) {
+				return $env_value;
+			}
+		}
+
 		if ( ! isset( $this->keys[ $provider ] ) ) {
 			return '';
 		}
