@@ -131,8 +131,8 @@ export default function SeoWorkArea( { post, onClose, onUpdate } ) {
 					<button
 						className="button button-small"
 						onClick={ handleGenerate }
-					ref={ yesButtonRef }
-				>
+						ref={ yesButtonRef }
+					>
 						Yes, replace
 					</button>
 					<button
