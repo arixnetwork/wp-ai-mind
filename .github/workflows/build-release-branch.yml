@@ -234,12 +234,32 @@ jobs:
       - name: Check conflict resolution status
         if: steps.cherry_pick.outputs.conflict == 'true'
         run: |
-          STATUS=$(cat /tmp/cherry-pick-status.txt 2>/dev/null || echo "failed: Claude did not write a status")
+          set -euo pipefail
+          STATUS_FILE=/tmp/cherry-pick-status.txt
+
+          if [ -f "$STATUS_FILE" ]; then
+            STATUS=$(cat "$STATUS_FILE")
+            echo "Resolution status (from file): $STATUS"
+          else
+            # Claude didn't write the status file — derive result from git state.
+            echo "Note: $STATUS_FILE not found — checking git state directly."
+            if [ -f .git/CHERRY_PICK_HEAD ]; then
+              STATUS="failed: cherry-pick still in progress after Claude action"
+            elif git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; then
+              UNRESOLVED=$(git diff --name-only --diff-filter=U 2>/dev/null | head -5 | tr '\n' ' ')
+              STATUS="failed: unresolved conflicts remain in: ${UNRESOLVED}"
+            else
+              STATUS="completed"
+              echo "Git state is clean — treating conflict resolution as completed."
+            fi
+          fi
+
           echo "Resolution status: $STATUS"
           if [ "$STATUS" != "completed" ]; then
             echo "::error::Cherry-pick conflict resolution failed — $STATUS"
             exit 1
           fi
+          echo "All conflicts resolved successfully."
 
       # ── Step 4: Determine version with semantic-release (dry-run) ─────────
 
