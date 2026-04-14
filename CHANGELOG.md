@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/niklas-joh/wp-ai-mind/compare/v1.0.1...v1.0.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* **chat:** return full conversation on create; 500 on DB failure ([#155](https://github.com/niklas-joh/wp-ai-mind/issues/155)) ([65a1c4e](https://github.com/niklas-joh/wp-ai-mind/commit/65a1c4ef4c796bcda062d8751408652bd68bb135)), closes [#120](https://github.com/niklas-joh/wp-ai-mind/issues/120)
+
 ## [1.0.1](https://github.com/niklas-joh/wp-ai-mind/compare/v1.0.0...v1.0.1) (2026-04-14)
 
 
