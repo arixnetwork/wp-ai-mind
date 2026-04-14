@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/niklas-joh/wp-ai-mind/compare/v1.0.3...v1.1.0) (2026-04-14)
+
+
+### Features
+
+* **chat:** delete conversation with confirmation and inline error state ([#158](https://github.com/niklas-joh/wp-ai-mind/issues/158)) ([3c1312b](https://github.com/niklas-joh/wp-ai-mind/commit/3c1312b261ef093b801e42e508b11f46b0131e09)), closes [#117](https://github.com/niklas-joh/wp-ai-mind/issues/117) [#125](https://github.com/niklas-joh/wp-ai-mind/issues/125) [#129](https://github.com/niklas-joh/wp-ai-mind/issues/129) [#130](https://github.com/niklas-joh/wp-ai-mind/issues/130) [#131](https://github.com/niklas-joh/wp-ai-mind/issues/131) [#132](https://github.com/niklas-joh/wp-ai-mind/issues/132)
+
 ## [1.0.3](https://github.com/niklas-joh/wp-ai-mind/compare/v1.0.2...v1.0.3) (2026-04-14)
 
 
