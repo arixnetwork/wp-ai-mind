@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/niklas-joh/wp-ai-mind/compare/v1.0.2...v1.0.3) (2026-04-14)
+
+
+### Bug Fixes
+
+* **deps:** add @wordpress/element to devDependencies alongside peerDependencies ([#159](https://github.com/niklas-joh/wp-ai-mind/issues/159)) ([673c19a](https://github.com/niklas-joh/wp-ai-mind/commit/673c19a004fb94b400f77bac3d7f29a59511d14d)), closes [#121](https://github.com/niklas-joh/wp-ai-mind/issues/121) [#126](https://github.com/niklas-joh/wp-ai-mind/issues/126)
+
 ## [1.0.2](https://github.com/niklas-joh/wp-ai-mind/compare/v1.0.1...v1.0.2) (2026-04-14)
 
 
