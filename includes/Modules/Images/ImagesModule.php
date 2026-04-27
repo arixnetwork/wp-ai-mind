@@ -5,6 +5,8 @@ namespace WP_AI_Mind\Modules\Images;
 use WP_AI_Mind\Providers\ProviderFactory;
 use WP_AI_Mind\Providers\ProviderException;
 use WP_AI_Mind\Settings\ProviderSettings;
+use WP_AI_Mind\Tiers\NJ_Tier_Manager;
+use WP_AI_Mind\Tiers\NJ_Usage_Tracker;
 
 class ImagesModule {
 
@@ -42,7 +44,7 @@ class ImagesModule {
 			[
 				'nonce'    => \wp_create_nonce( 'wp_rest' ),
 				'restUrl'  => \esc_url_raw( \rest_url( 'wp-ai-mind/v1' ) ),
-				'isPro'    => \wp_ai_mind_is_pro(),
+				'isPro'    => NJ_Tier_Manager::user_can( 'images' ),
 				'adminUrl' => \esc_url_raw( \admin_url() ),
 			]
 		);
@@ -62,7 +64,10 @@ class ImagesModule {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ self::class, 'handle_generate' ],
-				'permission_callback' => fn() => \current_user_can( 'edit_posts' ) && \wp_ai_mind_is_pro(),
+				'permission_callback' => function () {
+						$user_id = \get_current_user_id();
+						return \current_user_can( 'edit_posts' ) && NJ_Tier_Manager::user_can( 'images', $user_id ) && NJ_Usage_Tracker::check_limit( $user_id );
+				},
 				'args'                => [
 					'prompt'       => [
 						'required'          => true,
@@ -137,6 +142,7 @@ class ImagesModule {
 			);
 		}
 
+		NJ_Usage_Tracker::log_usage( count( $images ) );
 		$status = empty( $errors ) ? 201 : 207;
 
 		return new \WP_REST_Response(

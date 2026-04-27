@@ -5,6 +5,7 @@ declare( strict_types=1 );
 namespace WP_AI_Mind\Modules\Chat;
 
 use WP_AI_Mind\Settings\ProviderSettings;
+use WP_AI_Mind\Tiers\NJ_Tier_Manager;
 
 /**
  * REST controller for plugin settings.
@@ -69,7 +70,8 @@ class SettingsRestController {
 			'allowed_post_types'   => \get_option( 'wp_ai_mind_allowed_post_types', [ 'post', 'page' ] ),
 			'available_post_types' => $this->get_public_post_types(),
 			'enable_write_tools'   => (bool) \get_option( 'wp_ai_mind_enable_write_tools', false ),
-			'is_pro'               => (bool) \wp_ai_mind_is_pro(),
+			// Note: intentionally snake_case to match WP REST convention; JS reads this as `settings.is_pro` (see FeaturesTab.jsx).
+			'is_pro'               => NJ_Tier_Manager::user_can( 'generator' ),
 		];
 
 		return rest_ensure_response( $data );
@@ -81,9 +83,9 @@ class SettingsRestController {
 	 * Saves plugin settings from the request body.
 	 *
 	 * @param \WP_REST_Request $request Incoming REST request.
-	 * @return \WP_REST_Response
+	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public function save_settings( \WP_REST_Request $request ): \WP_REST_Response {
+	public function save_settings( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$provider_settings = $this->make_provider_settings();
 		$json_params       = $request->get_json_params();
 		$params            = ! empty( $json_params ) ? $json_params : [];
@@ -91,11 +93,25 @@ class SettingsRestController {
 		// Scalar options.
 		$default_provider = $request->get_param( 'default_provider' );
 		if ( null !== $default_provider ) {
+			if ( ! NJ_Tier_Manager::user_can( 'model_selection' ) ) {
+				return new \WP_Error(
+					'rest_plan_required',
+					__( 'Model selection requires the Pro Managed or Pro BYOK plan.', 'wp-ai-mind' ),
+					[ 'status' => 403 ]
+				);
+			}
 			update_option( 'wp_ai_mind_default_provider', sanitize_text_field( (string) $default_provider ) );
 		}
 
 		$image_provider = $request->get_param( 'image_provider' );
 		if ( null !== $image_provider ) {
+			if ( ! NJ_Tier_Manager::user_can( 'model_selection' ) ) {
+				return new \WP_Error(
+					'rest_plan_required',
+					__( 'Model selection requires the Pro Managed or Pro BYOK plan.', 'wp-ai-mind' ),
+					[ 'status' => 403 ]
+				);
+			}
 			update_option( 'wp_ai_mind_image_provider', sanitize_text_field( (string) $image_provider ) );
 		}
 
@@ -119,6 +135,14 @@ class SettingsRestController {
 		// API keys — skip any that are the mask placeholder (i.e. unchanged).
 		$api_keys = $request->get_param( 'api_keys' );
 		if ( is_array( $api_keys ) ) {
+			if ( ! NJ_Tier_Manager::user_can( 'own_api_key' ) ) {
+				return new \WP_Error(
+					'rest_plan_required',
+					__( 'API key management requires the Pro BYOK plan.', 'wp-ai-mind' ),
+					[ 'status' => 403 ]
+				);
+			}
+
 			$provider_map = [ 'claude', 'openai', 'gemini' ];
 
 			foreach ( $provider_map as $provider ) {
@@ -174,16 +198,6 @@ class SettingsRestController {
 	 */
 	private function mask_key( bool $has_key ): string {
 		return $has_key ? '••••••' : '';
-	}
-
-	/**
-	 * Mask a raw key string directly (used in the original spec signature).
-	 *
-	 * @param string $key The raw key value.
-	 * @return string
-	 */
-	private function mask( string $key ): string {
-		return '' !== $key ? '••••••' : '';
 	}
 
 	/**

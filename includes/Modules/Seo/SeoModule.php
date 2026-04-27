@@ -8,6 +8,8 @@ use WP_AI_Mind\Providers\ProviderFactory;
 use WP_AI_Mind\Providers\CompletionRequest;
 use WP_AI_Mind\Providers\ProviderException;
 use WP_AI_Mind\Settings\ProviderSettings;
+use WP_AI_Mind\Tiers\NJ_Tier_Manager;
+use WP_AI_Mind\Tiers\NJ_Usage_Tracker;
 
 class SeoModule {
 
@@ -46,7 +48,7 @@ class SeoModule {
 			[
 				'nonce'    => \wp_create_nonce( 'wp_rest' ),
 				'restUrl'  => \esc_url_raw( \rest_url( 'wp-ai-mind/v1' ) ),
-				'isPro'    => \wp_ai_mind_is_pro(),
+				'isPro'    => NJ_Tier_Manager::user_can( 'seo' ),
 				'adminUrl' => \esc_url_raw( \admin_url() ),
 			]
 		);
@@ -66,7 +68,10 @@ class SeoModule {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ self::class, 'handle_generate' ],
-				'permission_callback' => fn() => \current_user_can( 'edit_posts' ) && \wp_ai_mind_is_pro(),
+				'permission_callback' => function () {
+						$user_id = \get_current_user_id();
+						return \current_user_can( 'edit_posts' ) && NJ_Tier_Manager::user_can( 'seo', $user_id ) && NJ_Usage_Tracker::check_limit( $user_id );
+				},
 				'args'                => [
 					'post_id' => [
 						'required'          => true,
@@ -83,7 +88,10 @@ class SeoModule {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ self::class, 'handle_apply' ],
-				'permission_callback' => fn() => \current_user_can( 'edit_posts' ) && \wp_ai_mind_is_pro(),
+				'permission_callback' => function () {
+						$user_id = \get_current_user_id();
+						return \current_user_can( 'edit_posts' ) && NJ_Tier_Manager::user_can( 'seo', $user_id ) && NJ_Usage_Tracker::check_limit( $user_id );
+				},
 				'args'                => [
 					'post_id'        => [
 						'required'          => true,
@@ -167,6 +175,7 @@ class SeoModule {
 			$factory  = new ProviderFactory( new ProviderSettings() );
 			$provider = $factory->make_default();
 			$response = $provider->complete( $req );
+			NJ_Usage_Tracker::log_usage( $response->total_tokens );
 		} catch ( ProviderException $e ) {
 			\error_log( 'WP AI Mind SeoModule provider error: ' . $e->getMessage() );
 			return new \WP_REST_Response( [ 'error' => __( 'Provider error. Please try again later.', 'wp-ai-mind' ) ], 502 );

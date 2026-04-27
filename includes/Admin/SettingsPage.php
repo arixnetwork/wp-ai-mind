@@ -4,6 +4,8 @@ declare( strict_types=1 );
 
 namespace WP_AI_Mind\Admin;
 
+use WP_AI_Mind\Tiers\NJ_Tier_Manager;
+
 /**
  * Renders the WP AI Mind settings admin page.
  *
@@ -41,9 +43,15 @@ class SettingsPage {
 			[
 				'nonce'         => wp_create_nonce( 'wp_rest' ),
 				'restUrl'       => esc_url_raw( rest_url( 'wp-ai-mind/v1' ) ),
+				'upgradeUrl'    => esc_url( admin_url( 'admin.php?page=wp-ai-mind-upgrade' ) ),
 				'currentPostId' => 0,
-				'isPro'         => \wp_ai_mind_is_pro(),
+				'isPro'         => NJ_Tier_Manager::user_can( 'generator' ),
 				'siteTitle'     => get_bloginfo( 'name' ),
+				'tier'          => NJ_Tier_Manager::get_user_tier(),
+				'features'      => [
+					'model_selection' => NJ_Tier_Manager::user_can( 'model_selection' ),
+					'own_api_key'     => NJ_Tier_Manager::user_can( 'own_api_key' ),
+				],
 			]
 		);
 

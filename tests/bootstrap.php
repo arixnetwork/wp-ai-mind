@@ -15,9 +15,10 @@ if ( ! defined( 'WP_AI_MIND_HTTP_TIMEOUT' ) ) {
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
 // WordPress query-result format constants (not provided by Brain Monkey).
-if ( ! defined( 'OBJECT' ) )   { define( 'OBJECT',   'OBJECT' ); }
-if ( ! defined( 'ARRAY_A' ) )  { define( 'ARRAY_A',  'ARRAY_A' ); }
-if ( ! defined( 'ARRAY_N' ) )  { define( 'ARRAY_N',  'ARRAY_N' ); }
+if ( ! defined( 'OBJECT' ) )          { define( 'OBJECT',          'OBJECT' ); }
+if ( ! defined( 'ARRAY_A' ) )         { define( 'ARRAY_A',         'ARRAY_A' ); }
+if ( ! defined( 'ARRAY_N' ) )         { define( 'ARRAY_N',         'ARRAY_N' ); }
+if ( ! defined( 'DAY_IN_SECONDS' ) )  { define( 'DAY_IN_SECONDS',  86400 ); }
 
 // Brain Monkey setUp/tearDown are called per test via trait.
 // WP stubs — Brain Monkey provides them when you call Monkey\setUp().
@@ -26,9 +27,20 @@ if ( ! class_exists( 'WP_Error' ) ) {
 	class WP_Error {
 		public string $code;
 		public string $message;
+		private mixed $data;
 		public function __construct( string $code = '', string $message = '', $data = null ) {
 			$this->code    = $code;
 			$this->message = $message;
+			$this->data    = $data;
+		}
+		public function get_error_message(): string {
+			return $this->message;
+		}
+		public function get_error_code(): string {
+			return $this->code;
+		}
+		public function get_error_data( string $code = '' ): mixed {
+			return $this->data;
 		}
 	}
 }
@@ -76,3 +88,16 @@ if ( ! class_exists( 'WP_REST_Server' ) ) {
 if ( ! function_exists( 'rest_ensure_response' ) ) {
 	function rest_ensure_response( $data ) { return new \WP_REST_Response( $data ); }
 }
+
+// Minimal $wpdb stub so NJ_Usage_Tracker::log_usage() doesn't throw in tests
+// that don't set up their own $wpdb mock (e.g. provider tests).
+global $wpdb;
+if ( null === $wpdb ) {
+	$wpdb               = new class() {
+		public string $usermeta      = 'wp_usermeta';
+		public int    $rows_affected = 1;
+		public function prepare( string $sql, ...$args ): string { return $sql; }
+		public function query( string $sql ): int { return 1; }
+	};
+}
+
