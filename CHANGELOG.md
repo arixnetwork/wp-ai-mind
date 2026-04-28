@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/niklas-joh/wp-ai-mind/compare/v1.3.2...v1.3.3) (2026-04-28)
+
+
+### Bug Fixes
+
+* **proxy:** add pro_byok guard in Worker and clarify 401 error message ([#334](https://github.com/niklas-joh/wp-ai-mind/issues/334)) ([fac9721](https://github.com/niklas-joh/wp-ai-mind/commit/fac9721bfa4d91464784c38abc05f21cce1d24c4))
+
 ## [1.3.2](https://github.com/niklas-joh/wp-ai-mind/compare/v1.3.1...v1.3.2) (2026-04-28)
 
 
