@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/niklas-joh/wp-ai-mind/compare/v1.3.1...v1.3.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **tiers:** prevent infinite loop in maybe_demote_expired_trials() ([#333](https://github.com/niklas-joh/wp-ai-mind/issues/333)) ([9d33d04](https://github.com/niklas-joh/wp-ai-mind/commit/9d33d04a3615ad879988018141b451f8c43ee989)), closes [#323](https://github.com/niklas-joh/wp-ai-mind/issues/323)
+
 ## [1.3.1](https://github.com/niklas-joh/wp-ai-mind/compare/v1.3.0...v1.3.1) (2026-04-27)
 
 
