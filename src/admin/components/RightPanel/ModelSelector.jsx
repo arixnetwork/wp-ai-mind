@@ -1,4 +1,5 @@
 import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import { Cpu, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const STORAGE_KEY = 'wpaim_advanced_model';
@@ -15,7 +16,8 @@ const PROVIDER_LABELS = {
  *
  * In simple mode, shows the plugin's configured default model label.
  * In advanced mode, exposes provider and per-provider model dropdowns.
- * The advanced state is persisted to localStorage.
+ * The advanced state is persisted to localStorage. The Advanced toggle is
+ * disabled for non-Pro users with a tooltip explaining the restriction.
  *
  * @param {Object}   props
  * @param {Array}    props.providers         Array of provider objects from the /providers endpoint.
@@ -23,6 +25,7 @@ const PROVIDER_LABELS = {
  * @param {string}   props.selectedModel     Currently selected model ID, or empty for the provider default.
  * @param {Function} props.onProviderChange  Called with the new provider slug when changed.
  * @param {Function} props.onModelChange     Called with the new model ID when changed.
+ * @param {boolean}  [props.isPro]           Whether the current user has a Pro tier.
  * @return {ReactElement}
  */
 export default function ModelSelector( {
@@ -31,11 +34,12 @@ export default function ModelSelector( {
 	selectedModel,
 	onProviderChange,
 	onModelChange,
+	isPro = false,
 } ) {
 	const { defaultModelLabel = 'AI' } = window.wpAiMindData || {};
 
 	const [ isAdvanced, setIsAdvanced ] = useState(
-		() => window.localStorage.getItem( STORAGE_KEY ) === '1'
+		() => isPro && window.localStorage.getItem( STORAGE_KEY ) === '1'
 	);
 
 	function toggleAdvanced( value ) {
@@ -66,6 +70,15 @@ export default function ModelSelector( {
 						className="wpaim-model-advanced-toggle"
 						type="button"
 						onClick={ () => toggleAdvanced( true ) }
+						disabled={ ! isPro }
+						title={
+							isPro
+								? undefined
+								: __(
+										'Upgrade to Pro to select providers and models',
+										'wp-ai-mind'
+								  )
+						}
 					>
 						Advanced{ ' ' }
 						<ChevronRight size={ 11 } strokeWidth={ 1.5 } />

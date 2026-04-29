@@ -22,13 +22,14 @@ use WP_AI_Mind\Voice\VoiceInjector;
  * REST controller for chat conversations, providers, and post search.
  *
  * Routes:
- *   GET  /wp-ai-mind/v1/conversations               — list conversations
- *   POST /wp-ai-mind/v1/conversations               — create conversation
- *   GET  /wp-ai-mind/v1/conversations/{id}/messages — get messages
- *   POST /wp-ai-mind/v1/conversations/{id}/messages — send message (AI turn)
- *   DELETE /wp-ai-mind/v1/conversations/{id}        — delete conversation
- *   GET  /wp-ai-mind/v1/providers                   — list available providers
- *   GET  /wp-ai-mind/v1/search-posts                — search posts
+ *   GET    /wp-ai-mind/v1/conversations               — list conversations
+ *   POST   /wp-ai-mind/v1/conversations               — create conversation
+ *   GET    /wp-ai-mind/v1/conversations/{id}/messages — get messages
+ *   POST   /wp-ai-mind/v1/conversations/{id}/messages — send message (AI turn)
+ *   PATCH  /wp-ai-mind/v1/conversations/{id}          — update conversation title
+ *   DELETE /wp-ai-mind/v1/conversations/{id}          — delete conversation
+ *   GET    /wp-ai-mind/v1/providers                   — list available providers
+ *   GET    /wp-ai-mind/v1/search-posts                — search posts
  *
  * All routes require the edit_posts capability except delete, which also
  * allows manage_options to delete any conversation.
@@ -124,9 +125,24 @@ class ChatRestController {
 			self::NAMESPACE,
 			'/conversations/(?P<id>\d+)',
 			[
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'delete_conversation' ],
-				'permission_callback' => [ $this, 'check_permission' ],
+				[
+					'methods'             => 'PATCH',
+					'callback'            => [ $this, 'update_conversation' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+					'args'                => [
+						'title' => [
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+							'maxLength'         => 100,
+						],
+					],
+				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_conversation' ],
+					'permission_callback' => [ $this, 'check_permission' ],
+				],
 			]
 		);
 
@@ -396,6 +412,32 @@ class ChatRestController {
 	}
 
 	/**
+	 * Update the title of a conversation owned by the current user.
+	 *
+	 * @since 1.0.0
+	 * @param \WP_REST_Request $request Incoming REST request; must contain 'id' and 'title' parameters.
+	 * @return \WP_REST_Response|\WP_Error 200 on success; 404 if not found; 403 if forbidden; 500 on DB failure.
+	 */
+	public function update_conversation( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
+		$store   = $this->make_store();
+		$conv_id = (int) $request->get_param( 'id' );
+		$conv    = $store->get_conversation( $conv_id );
+
+		if ( ! $conv ) {
+			return new \WP_Error( 'not_found', __( 'Not found.', 'wp-ai-mind' ), [ 'status' => 404 ] );
+		}
+		if ( get_current_user_id() !== (int) $conv['user_id'] ) {
+			return new \WP_Error( 'forbidden', __( 'You cannot update this conversation.', 'wp-ai-mind' ), [ 'status' => 403 ] );
+		}
+
+		$updated = $store->update_title( $conv_id, $request->get_param( 'title' ) );
+		if ( ! $updated ) {
+			return new \WP_Error( 'db_error', __( 'Failed to update conversation.', 'wp-ai-mind' ), [ 'status' => 500 ] );
+		}
+		return rest_ensure_response( [ 'updated' => true ] );
+	}
+
+	/**
 	 * Delete a conversation owned by the current user (or any conversation for admins).
 	 *
 	 * @since 1.0.0
@@ -529,6 +571,7 @@ class ChatRestController {
 	/**
 	 * Append a complete tool exchange (assistant tool call + user tool result) to the message history.
 	 *
+	 * @since 1.0.0
 	 * @param array              $messages      Existing message history.
 	 * @param string             $provider_slug Provider identifier.
 	 * @param CompletionResponse $tool_response The provider response that triggered tool execution.

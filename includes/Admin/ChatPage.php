@@ -79,6 +79,7 @@ class ChatPage {
 				'isPro'             => NJ_Tier_Manager::user_can( 'chat' ),
 				'siteTitle'         => get_bloginfo( 'name' ),
 				'defaultModelLabel' => esc_html( $default_model_label ),
+				'defaultProvider'   => $default_slug,
 			]
 		);
 

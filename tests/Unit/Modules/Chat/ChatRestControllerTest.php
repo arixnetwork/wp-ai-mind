@@ -26,6 +26,135 @@ class ChatRestControllerTest extends TestCase {
         parent::tearDown();
     }
 
+    // ── update_conversation ───────────────────────────────────────────────────
+
+    /**
+     * Helper: build an anonymous ChatRestController subclass with an injected store mock.
+     *
+     * @param \WP_AI_Mind\DB\ConversationStore $store_mock
+     * @return ChatRestController
+     */
+    private function make_controller_with_store( \WP_AI_Mind\DB\ConversationStore $store_mock ): ChatRestController {
+        return new class( $this->tool_registry, $this->tool_executor, $store_mock ) extends ChatRestController {
+            private \WP_AI_Mind\DB\ConversationStore $store_override;
+            public function __construct(
+                ToolRegistry $tr,
+                ToolExecutor $te,
+                \WP_AI_Mind\DB\ConversationStore $store
+            ) {
+                parent::__construct( $tr, $te );
+                $this->store_override = $store;
+            }
+            protected function make_store(): \WP_AI_Mind\DB\ConversationStore {
+                return $this->store_override;
+            }
+        };
+    }
+
+    public function test_update_conversation_returns_404_when_not_found(): void {
+        Functions\when( '__' )->alias( fn( $s ) => $s );
+
+        $store_mock = $this->createMock( \WP_AI_Mind\DB\ConversationStore::class );
+        $store_mock->method( 'get_conversation' )->willReturn( null );
+
+        $controller = $this->make_controller_with_store( $store_mock );
+
+        $request = new \WP_REST_Request( 'PATCH' );
+        $request->set_url_params( [ 'id' => '42' ] );
+        $request->set_body_params( [ 'title' => 'New title' ] );
+
+        $response = $controller->update_conversation( $request );
+
+        $this->assertInstanceOf( \WP_Error::class, $response );
+        $this->assertSame( 404, $response->get_error_data()['status'] );
+    }
+
+    public function test_update_conversation_returns_403_when_not_owned(): void {
+        Functions\when( '__' )->alias( fn( $s ) => $s );
+        Functions\when( 'get_current_user_id' )->justReturn( 1 );
+
+        $store_mock = $this->createMock( \WP_AI_Mind\DB\ConversationStore::class );
+        $store_mock->method( 'get_conversation' )->willReturn( [ 'user_id' => '999' ] );
+
+        $controller = $this->make_controller_with_store( $store_mock );
+
+        $request = new \WP_REST_Request( 'PATCH' );
+        $request->set_url_params( [ 'id' => '42' ] );
+        $request->set_body_params( [ 'title' => 'Hijacked title' ] );
+
+        $response = $controller->update_conversation( $request );
+
+        $this->assertInstanceOf( \WP_Error::class, $response );
+        $this->assertSame( 403, $response->get_error_data()['status'] );
+    }
+
+    public function test_update_conversation_happy_path_calls_update_title_and_returns_updated(): void {
+        Functions\when( 'get_current_user_id' )->justReturn( 5 );
+        Functions\when( 'sanitize_text_field' )->alias( fn( $v ) => $v );
+
+        $store_mock = $this->createMock( \WP_AI_Mind\DB\ConversationStore::class );
+        $store_mock->method( 'get_conversation' )->with( 7 )->willReturn( [ 'user_id' => '5' ] );
+        $store_mock->expects( $this->once() )
+            ->method( 'update_title' )
+            ->with( 7, 'My updated title' )
+            ->willReturn( true );
+
+        $controller = $this->make_controller_with_store( $store_mock );
+
+        $request = new \WP_REST_Request( 'PATCH' );
+        $request->set_url_params( [ 'id' => '7' ] );
+        $request->set_body_params( [ 'title' => 'My updated title' ] );
+
+        $response = $controller->update_conversation( $request );
+
+        $this->assertInstanceOf( \WP_REST_Response::class, $response );
+        $this->assertSame( 200, $response->get_status() );
+        $this->assertSame( [ 'updated' => true ], $response->data );
+    }
+
+    public function test_update_conversation_passes_title_to_store_unchanged(): void {
+        // The route-level sanitize_callback runs before the controller method, so by the
+        // time update_conversation() executes, get_param('title') already returns a clean
+        // value. The controller must not sanitise again — it passes the value straight through.
+        Functions\when( 'get_current_user_id' )->justReturn( 3 );
+
+        $store_mock = $this->createMock( \WP_AI_Mind\DB\ConversationStore::class );
+        $store_mock->method( 'get_conversation' )->willReturn( [ 'user_id' => '3' ] );
+        $store_mock->expects( $this->once() )
+            ->method( 'update_title' )
+            ->with( 10, 'My title' )
+            ->willReturn( true );
+
+        $controller = $this->make_controller_with_store( $store_mock );
+
+        $request = new \WP_REST_Request( 'PATCH' );
+        $request->set_url_params( [ 'id' => '10' ] );
+        $request->set_body_params( [ 'title' => 'My title' ] );
+
+        $response = $controller->update_conversation( $request );
+        $this->assertSame( [ 'updated' => true ], $response->data );
+    }
+
+    public function test_update_conversation_returns_500_when_db_update_fails(): void {
+        Functions\when( '__' )->alias( fn( $s ) => $s );
+        Functions\when( 'get_current_user_id' )->justReturn( 5 );
+
+        $store_mock = $this->createMock( \WP_AI_Mind\DB\ConversationStore::class );
+        $store_mock->method( 'get_conversation' )->willReturn( [ 'user_id' => '5' ] );
+        $store_mock->method( 'update_title' )->willReturn( false );
+
+        $controller = $this->make_controller_with_store( $store_mock );
+
+        $request = new \WP_REST_Request( 'PATCH' );
+        $request->set_url_params( [ 'id' => '7' ] );
+        $request->set_body_params( [ 'title' => 'Some title' ] );
+
+        $response = $controller->update_conversation( $request );
+
+        $this->assertInstanceOf( \WP_Error::class, $response );
+        $this->assertSame( 500, $response->get_error_data()['status'] );
+    }
+
     // ── list_conversations ────────────────────────────────────────────────────
 
     public function test_list_conversations_returns_only_expected_keys(): void {
@@ -249,6 +378,7 @@ class ChatRestControllerTest extends TestCase {
         $controller->register_routes();
 
         $this->assertContains( 'wp-ai-mind/v1/conversations', $registered );
+        $this->assertContains( 'wp-ai-mind/v1/conversations/(?P<id>\\d+)', $registered, 'PATCH /conversations/{id} route must be registered.' );
         $this->assertContains( 'wp-ai-mind/v1/conversations/(?P<id>\\d+)/messages', $registered );
         $this->assertContains( 'wp-ai-mind/v1/providers', $registered );
     }
