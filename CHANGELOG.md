@@ -1,3 +1,10 @@
+## [1.3.5](https://github.com/niklas-joh/wp-ai-mind/compare/v1.3.4...v1.3.5) (2026-04-29)
+
+
+### Bug Fixes
+
+* **chat:** sanitise title explicitly and remove unreachable db-error branch ([#370](https://github.com/niklas-joh/wp-ai-mind/issues/370)) ([d0b994b](https://github.com/niklas-joh/wp-ai-mind/commit/d0b994bb7e2637ff2ecd50ece3f59566cf62689b))
+
 ## [1.3.4](https://github.com/niklas-joh/wp-ai-mind/compare/v1.3.3...v1.3.4) (2026-04-29)
 
 
