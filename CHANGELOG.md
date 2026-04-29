@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/niklas-joh/wp-ai-mind/compare/v1.3.3...v1.3.4) (2026-04-29)
+
+
+### Bug Fixes
+
+* **chat:** default provider selection, conversation title update, inline delete errors ([#337](https://github.com/niklas-joh/wp-ai-mind/issues/337)) ([0630043](https://github.com/niklas-joh/wp-ai-mind/commit/0630043649049aefe86f615cdcc46792c58c7a28))
+
 ## [1.3.3](https://github.com/niklas-joh/wp-ai-mind/compare/v1.3.2...v1.3.3) (2026-04-28)
 
 
