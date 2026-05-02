@@ -1,5 +1,5 @@
 === WP AI Mind ===
-Contributors: njohansson
+Contributors: arixnetwork
 Tags: ai, content, seo, chatbot, openai, claude, gemini
 Requires at least: 6.4
 Tested up to: 6.8
